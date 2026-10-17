@@ -343,6 +343,14 @@ async function loadStrava(force){
   const key=sget(SK);
   if(!key){runStatus("Datos de ejemplo.","Conectar Strava");return}
   $("runBtn").disabled=true;runStatus("Actualizando…","Actualizar");
+  // Dispositivo sin datos guardados: primero lo último que tenga el servidor (rápido), luego se actualiza.
+  if(!live&&!force){
+    try{
+      const r0=await fetch(API_BASE+"/.netlify/functions/strava?cached=1",{headers:{"x-dash-key":key}});
+      const d0=r0.ok?await r0.json():null;
+      if(d0&&d0.ok&&useStrava(d0,"Strava (guardado)"))runStatus("Datos guardados de hace "+ago(d0.updated).replace("hace ","")+". Actualizando…","Actualizar");
+    }catch(e){}
+  }
   try{
     const res=await fetch(API_BASE+"/.netlify/functions/strava"+(force?"?force=1":""),{headers:{"x-dash-key":key}});
     let d=null;try{d=await res.json()}catch(e){}

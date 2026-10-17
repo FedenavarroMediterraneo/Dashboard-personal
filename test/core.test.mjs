@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { aggregate, analyze, buildPrs, stepEfforts, trim, getAccessToken, fetchDashboardData, signState, checkState, safeEq, StravaError } from '../netlify/lib/strava-core.mjs';
+import { aggregate, analyze, syncRuns, buildPrs, stepEfforts, trim, getAccessToken, fetchDashboardData, signState, checkState, safeEq, StravaError } from '../netlify/lib/strava-core.mjs';
 
 const mem = () => { const m = new Map(); return { m,
   async get(k) { return m.has(k) ? JSON.parse(m.get(k)) : null; },
@@ -143,6 +143,32 @@ await t('fetchDashboardData: sin permiso de zapatillas no rompe', async () => {
 await t('fetchDashboardData: error 429 en actividades', async () => {
   const s = await authStore();
   await assert.rejects(fetchDashboardData({ env, store: s, fetchImpl: async () => ({ ok: false, status: 429 }) }), e => e instanceof StravaError && e.kind === 'rate');
+});
+await t('syncRuns: primera vez completa, luego incremental con after=, fusiona y vuelve a bajar todo cada 24 h', async () => {
+  const s = await authStore(); const calls = [];
+  let serve = [run(1, '2026-10-01', 10, { map: { summary_polyline: 'AAA' } }), run(2, '2026-09-01', 5, { map: { summary_polyline: 'BBB' } }), run(9, '2026-10-02', 99, { sport_type: 'Ride' })];
+  const f = async u => { calls.push(u); return { ok: true, status: 200, json: async () => serve }; };
+  const t0 = new Date('2026-10-16T08:00:00Z');
+  let r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: t0 });
+  assert.equal(r.full, true); assert.ok(!calls[0].includes('after=')); assert.equal(r.runs.length, 2);
+  // incremental: una carrera editada (id 1: 12 km) y una nueva (id 3)
+  serve = [run(1, '2026-10-01', 12), run(3, '2026-10-16', 6, { map: { summary_polyline: 'CCC' } })];
+  r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: new Date(t0.getTime() + 3600e3) });
+  assert.equal(r.full, false); assert.match(calls[1], /after=\d+&per_page=200&page=1/);
+  const after = +calls[1].match(/after=(\d+)/)[1];
+  assert.equal(after, Math.floor(t0.getTime() / 1000) - 7 * 86400);
+  assert.deepEqual(r.runs.map(x => x.id).sort(), [1, 2, 3]); assert.equal(r.runs.find(x => x.id === 1).km, 12);
+  assert.equal(r.runs.find(x => x.id === 3).p, 'CCC'); assert.equal(r.runs.find(x => x.id === 1).p, null); assert.equal(r.runs.find(x => x.id === 2).p, null);
+  // pasadas 24 h: completa otra vez y se descarta lo que ya no existe en Strava (id 2)
+  serve = [run(1, '2026-10-01', 12), run(3, '2026-10-16', 6)];
+  r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: new Date(t0.getTime() + 25 * 3600e3) });
+  assert.equal(r.full, true); assert.ok(!calls[2].includes('after=')); assert.deepEqual(r.runs.map(x => x.id).sort(), [1, 3]);
+});
+await t('syncRuns: si Strava falla en incremental no se pierde lo guardado', async () => {
+  const s = await authStore();
+  await syncRuns({ token: 'A', store: s, fetchImpl: async () => ({ ok: true, status: 200, json: async () => [run(1, '2026-10-01', 10)] }), now: new Date('2026-10-16T08:00:00Z') });
+  await assert.rejects(syncRuns({ token: 'A', store: s, fetchImpl: async () => ({ ok: false, status: 429 }), now: new Date('2026-10-16T09:00:00Z') }), e => e.kind === 'rate');
+  assert.equal((await s.get('activities')).runs.length, 1);
 });
 await t('estado firmado: válido, manipulado, caducado, vacío', async () => {
   const st = signState('k', 1000);

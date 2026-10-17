@@ -228,18 +228,44 @@ async function loadGear(ids, token, store, fetchImpl, now) {
   return { cache, err };
 }
 
+export const FULL_RESYNC_MS = 24 * 3600 * 1000;
+export const SYNC_MARGIN_S = 7 * 86400;
+const toRaw = r => ({ start_date_local: r.d, distance: r.km * 1000, sport_type: 'Run' });
+
+// Guarda el historial de carreras en el servidor. Las siguientes veces solo pide a Strava lo reciente
+// (con 7 días de margen por subidas tardías) y lo fusiona; una vez al día vuelve a bajar todo para
+// recoger ediciones y borrados.
+export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date() }) {
+  const saved = await store.get('activities', { type: 'json' }).catch(() => null);
+  const full = !saved || !Array.isArray(saved.runs) || !saved.fullAt || now.getTime() - new Date(saved.fullAt).getTime() > FULL_RESYNC_MS;
+  const after = full ? '' : `after=${Math.max(0, (saved.syncedAt || 0) - SYNC_MARGIN_S)}&`;
+  const fetched = [];
+  for (let page = 1; page <= 15; page++) {
+    const batch = await api(`/athlete/activities?${after}per_page=200&page=${page}`, token, fetchImpl);
+    fetched.push(...batch);
+    if (batch.length < 200) break;
+  }
+  const fresh = fetched.filter(a => RUN_TYPES.has(a.sport_type || a.type)).map(trim);
+  let runs;
+  if (full) runs = fresh;
+  else {
+    const byId = new Map(saved.runs.map(r => [r.id, r]));
+    for (const r of fresh) byId.set(r.id, r);
+    runs = [...byId.values()];
+  }
+  let newest = null;
+  for (const r of runs) if (!newest || r.d > newest.d) newest = r;
+  for (const r of runs) if (r !== newest) r.p = null; // la ruta solo hace falta de la última carrera
+  await store.setJSON('activities', {
+    syncedAt: Math.floor(now.getTime() / 1000), fullAt: full ? now.toISOString() : saved.fullAt, runs,
+  });
+  return { runs, full };
+}
+
 export async function fetchDashboardData({ env, store, fetchImpl = fetch, now = new Date() }) {
   const token = await getAccessToken({ env, store, fetchImpl, now: now.getTime() });
   const today = madridNow(now);
-  // Todo el historial (200 por página): sirve para total, récords, zapatillas y comparación anual.
-  const all = [];
-  for (let page = 1; page <= 15; page++) {
-    const batch = await api(`/athlete/activities?per_page=200&page=${page}`, token, fetchImpl);
-    all.push(...batch);
-    if (batch.length < 200) break;
-  }
-  const runsRaw = all.filter(a => RUN_TYPES.has(a.sport_type || a.type));
-  const runs = runsRaw.map(trim);
+  const { runs } = await syncRuns({ token, store, fetchImpl, now });
   const index = runs.filter(r => r.km >= 1).map(r => ({ id: r.id, d: r.d }));
   await store.setJSON('runs', index);
   let athleteId = (await store.get('athlete', { type: 'json' }).catch(() => null))?.id;
@@ -248,7 +274,7 @@ export async function fetchDashboardData({ env, store, fetchImpl = fetch, now = 
     await store.setJSON('athlete', { id: athleteId });
   }
   const stats = await api(`/athletes/${athleteId}/stats`, token, fetchImpl);
-  const agg = aggregate(all, today);
+  const agg = aggregate(runs.map(toRaw), today);
   const ana = analyze(runs, today);
   // zapatillas
   const used = new Map();

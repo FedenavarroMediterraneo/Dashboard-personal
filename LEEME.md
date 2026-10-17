@@ -25,6 +25,11 @@ Despliega una vez después de crearlas.
 1. En `docs/index.html` busca `const API_BASE=""` y pon la dirección de tu Netlify, por ejemplo `const API_BASE="https://tu-funciones.netlify.app"`. Sube el cambio a GitHub (no dispara Netlify).
 2. Abre una sola vez `https://tu-funciones.netlify.app/.netlify/functions/strava-auth?key=TU_DASH_KEY`, acepta los permisos en Strava (actividades y perfil; el de perfil sirve para leer los nombres de las zapatillas) y verás "Strava conectado". El token se guarda en el servidor (Netlify Blobs), nunca en la página.
 
+## Velocidad de carga de Strava
+- El servidor guarda tu historial de carreras. Al actualizar, solo pide a Strava lo reciente (con 7 días de margen por subidas tardías) y lo fusiona. Una vez al día vuelve a bajar todo, para recoger ediciones y borrados. Esto reduce las peticiones a Strava y el tiempo de espera.
+- Si abres el dashboard en un dispositivo sin datos guardados, primero muestra lo último que tiene el servidor ("Datos guardados de hace…") y a continuación lo actualiza. En un dispositivo que ya tiene datos, los pinta al instante desde el navegador.
+- El resultado se reutiliza 15 minutos; el botón "Actualizar" fuerza una lectura.
+
 ## Kilómetros de amigos sincronizados
 Con tu clave puesta, la lista de amigos y sus kilómetros se guardan en tu servidor de Netlify (función `friends`, almacenados en Netlify Blobs) y se ven igual en todos tus dispositivos. Sin clave, se guardan solo en ese navegador.
 La primera vez que abres el dashboard con la clave puesta, si el servidor está vacío, sube lo que hubiera guardado en ese navegador (una sola vez). Lo que hubiera en otros dispositivos antes de poner la clave no se importa.

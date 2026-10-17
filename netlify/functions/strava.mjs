@@ -12,7 +12,11 @@ export default async (req) => {
 
   const store = getStore('strava');
   const cached = await store.get('cache', { type: 'json' }).catch(() => null);
-  if (new URL(req.url).searchParams.get('step') === 'efforts') {
+  const q = new URL(req.url).searchParams;
+  const fresh = cached && Date.now() - new Date(cached.updated).getTime() < CACHE_MS;
+  // Primera pintura rápida: devuelve lo último guardado sin tocar Strava, aunque tenga más de 15 minutos.
+  if (q.get('cached') === '1') return cached ? json({ ...cached, cached: true, stale: !fresh }) : json({ ok: false, error: 'nodata' }, 404);
+  if (q.get('step') === 'efforts') {
     if (!cached) return json({ ok: false, error: 'nodata' }, 409);
     try {
       const { prs, rate } = await stepEfforts({ env, store });
@@ -23,8 +27,7 @@ export default async (req) => {
       return json({ ...cached, cached: true, error: e.kind || 'api' });
     }
   }
-  const fresh = cached && Date.now() - new Date(cached.updated).getTime() < CACHE_MS;
-  if (fresh && !new URL(req.url).searchParams.has('force')) return json({ ...cached, cached: true });
+  if (fresh && !q.has('force')) return json({ ...cached, cached: true });
 
   try {
     const data = await fetchDashboardData({ env, store });
