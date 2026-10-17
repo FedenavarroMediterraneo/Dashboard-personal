@@ -261,7 +261,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     <div class="life"><div class="batt" id="battery" role="img"></div><b>Life</b></div>
   </section>
 </div>
-<p class="note">Los kilómetros de Fede vienen de Strava cuando está conectado; el resto son datos de ejemplo. Edita el objeto DATA al principio del script. Para guardar los kilómetros de tus amigos en la nube, rellena dbUrl.</p>
+<p class="note">Los kilómetros de Fede vienen de Strava cuando está conectado; el resto son datos de ejemplo. Edita el objeto DATA al principio del script. Los kilómetros de tus amigos se guardan en la nube cuando tienes la clave puesta.</p>
 </main>
 </div>
 
@@ -270,7 +270,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 const DATA={
   name:"Fede",city:"Castellón de la Plana",country:"España",weather:{t:18,kind:"sun",txt:"Soleado"},lat:39.9864,lon:-0.0513,
   run:{goalMonth:100,year:924,total:4582,acts:12,vsPrev:12,months:[48,62,55,71,66,80,52,74,90,82.4,0,0]},
-  amigos:["Sergi","Raúl"],dbUrl:"",
+  amigos:["Sergi","Raúl"],
   xbox:{tag:"FedeNavarro",score:57683,ach:33611,last:"Lobo solitario · Halo Infinite · hace 3 días"},
   steam:{hours:4287,two:13.2,bars:[3,5,2,6,4,8,7,5,9,6],top:"Factorio · 312 h"},
   ps:{level:412,plat:12,gold:102,silver:432,bronze:2981,last:"Maestro del destino · Final Fantasy XVI · hace 5 días"},
@@ -369,11 +369,12 @@ async function scanPrs(key){
 }
 try{const c=JSON.parse(sget(SC)||"null");if(c&&new Date(c.updated).getFullYear()===y&&sget(SK))useStrava(c,"Strava (guardado)")}catch(e){}
 $("runBtn").onclick=()=>{if(!sget(SK)){$("keyF").hidden=false;$("keyI").focus()}else loadStrava(true)};
-$("keyF").onsubmit=ev=>{ev.preventDefault();const v=$("keyI").value.trim();if(!v)return;sset(SK,v);$("keyI").value="";$("keyF").hidden=true;loadStrava(true)};
+$("keyF").onsubmit=ev=>{ev.preventDefault();const v=$("keyI").value.trim();if(!v)return;sset(SK,v);$("keyI").value="";$("keyF").hidden=true;loadStrava(true);if(typeof load==="function")load()};
 
 // Ranking y kilómetros de amigos
-// Si pones dbUrl (Firebase Realtime Database) se guarda en la nube; si no, solo en este navegador.
-const U=DATA.dbUrl.replace(/\/$/,""),ym=y+"-"+String(m+1).padStart(2,"0");
+// Con tu clave puesta, los kilómetros y los amigos se guardan en tu servidor de Netlify y se ven igual en todos tus dispositivos.
+// Sin clave (o sin conexión) se guardan solo en este navegador.
+const ym=y+"-"+String(m+1).padStart(2,"0");
 let E=[],A=[...DATA.amigos];
 const ls=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const msg=t=>{$("fMsg").textContent=t},esc=t=>String(t).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
@@ -392,10 +393,33 @@ function render(){
   $("chips").innerHTML=A.map(n=>`<span>${esc(n)}<button data-n="${esc(n)}" aria-label="Quitar a ${esc(n)}">&times;</button></span>`).join("")||'<span class="sub">Sin amigos todavía.</span>';
   $("log").innerHTML=E.filter(e=>A.includes(e.n)).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,8).map(e=>`<li><span>${esc(e.n)} · ${new Date(e.d+"T00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})} · ${fmt(e.km,1)} km</span><button data-id="${esc(e.id)}">Borrar</button></li>`).join("")||'<li class="sub">Aún no hay kilómetros guardados.</li>';
 }
-async function load(){try{if(U){const o=await(await fetch(U+"/km.json")).json()||{};E=Object.entries(o).map(([id,v])=>({id,...v}));const a=await(await fetch(U+"/amigos.json")).json();if(Array.isArray(a))A=a}else{E=ls("km")||[];A=ls("amigos")||A}}catch(e){E=ls("km")||[];A=ls("amigos")||A;msg("No se pudo conectar con la base de datos.")}render()}
-async function saveA(){try{if(U)await fetch(U+"/amigos.json",{method:"PUT",body:JSON.stringify(A)});else ls("amigos",A)}catch(x){msg("No se pudo guardar la lista de amigos.")}}
-async function add(n,d,km){const e={n,d,km};try{if(U)e.id=(await(await fetch(U+"/km.json",{method:"POST",body:JSON.stringify(e)})).json()).name;else e.id=""+Date.now();E.push(e);if(!U)ls("km",E);msg("Guardado: "+n+", "+fmt(km,1)+" km.")}catch(x){msg("No se pudo guardar. Inténtalo de nuevo.")}render()}
-async function del(id){try{if(U)await fetch(U+"/km/"+id+".json",{method:"DELETE"});E=E.filter(e=>e.id!==id);if(!U)ls("km",E);msg("Borrado.")}catch(x){msg("No se pudo borrar.")}render()}
+let remote=false,lastSync=0;
+async function fcall(body){
+  const res=await fetch(API_BASE+"/.netlify/functions/friends",{method:body?"POST":"GET",headers:{"x-dash-key":sget(SK)||"",...(body?{"content-type":"application/json"}:{})},body:body?JSON.stringify(body):undefined});
+  let d=null;try{d=await res.json()}catch(e){}
+  if(!res.ok||!d||!d.ok){const e=new Error(d&&d.error||"api");e.code=d&&d.error;throw e}
+  return d;
+}
+const localFriends=()=>ls("amigos")||[...DATA.amigos];
+async function load(){
+  const loc={E:ls("km")||[],A:localFriends()};
+  if(sget(SK)){
+    try{
+      let d=await fcall();
+      if(!d.entries.length&&d.friends===null&&(loc.E.length||ls("amigos"))&&!ls("kmImportado")){
+        await fcall({action:"import",entries:loc.E,friends:ls("amigos")});ls("kmImportado",true);d=await fcall();
+      }
+      E=d.entries;A=d.friends||[...DATA.amigos];remote=true;lastSync=Date.now();
+      msg("Sincronizado con la nube.");render();return;
+    }catch(e){remote=false;msg(e.code==="key"?"La clave no es correcta. Los kilómetros se guardan solo en este navegador.":"Sin conexión con el servidor. Los kilómetros se guardan solo en este navegador.")}
+  }else{remote=false;msg("Solo en este navegador. Pon tu clave en la tarjeta Running para sincronizar.")}
+  E=loc.E;A=loc.A;render();
+}
+async function saveA(){try{if(remote)await fcall({action:"friends",list:A});else ls("amigos",A)}catch(x){msg("No se pudo guardar la lista de amigos.")}}
+async function add(n,d,km){const e={n,d,km};try{if(remote)e.id=(await fcall({action:"add",entry:e})).entry.id;else{e.id=""+Date.now();ls("km",[...E,e])}E.push(e);msg("Guardado: "+n+", "+fmt(km,1)+" km.")}catch(x){msg("No se pudo guardar. Inténtalo de nuevo.")}render()}
+async function del(id){try{if(remote)await fcall({action:"del",id});E=E.filter(e=>e.id!==id);if(!remote)ls("km",E);msg("Borrado.")}catch(x){msg("No se pudo borrar.")}render()}
+// Al volver a la pestaña se recarga, por si has añadido kilómetros desde otro dispositivo.
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&remote&&Date.now()-lastSync>60000)load()});
 $("fD").value=new Date(now-now.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 $("fAdd").onclick=()=>{const km=parseFloat($("fK").value);if(!$("fN").value){msg("Añade primero un amigo.");return}if(!(km>0)){msg("Introduce los kilómetros.");return}if(!$("fD").value){msg("Elige la fecha.");return}add($("fN").value,$("fD").value,km);$("fK").value=""};
 $("log").onclick=ev=>{const b=ev.target.closest("button");if(b)del(b.dataset.id)};

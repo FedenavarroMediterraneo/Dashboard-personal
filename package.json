@@ -3,5 +3,5 @@
   "private": true,
   "type": "module",
   "dependencies": { "@netlify/blobs": "^8.1.0" },
-  "scripts": { "test": "node test/core.test.mjs" }
+  "scripts": { "test": "node test/core.test.mjs && node test/friends.test.mjs" }
 }

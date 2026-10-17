@@ -1,22 +1,11 @@
 import { getStore } from '@netlify/blobs';
 import { safeEq, fetchDashboardData, stepEfforts, StravaError, CACHE_MS } from '../lib/strava-core.mjs';
-
-// ALLOWED_ORIGIN: orígenes del dashboard separados por comas (p. ej. https://tuusuario.github.io). Sin definir, solo mismo origen.
-let CORS = {};
-const setCors = req => {
-  const allowed = (process.env.ALLOWED_ORIGIN || '').split(',').map(x => x.trim().replace(/\/$/, '')).filter(Boolean);
-  const o = req.headers.get('origin');
-  CORS = o && allowed.includes(o) ? { 'access-control-allow-origin': o, vary: 'Origin' } : {};
-};
-const json = (body, status = 200) => new Response(JSON.stringify(body), {
-  status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...CORS },
-});
+import { responder } from '../lib/http.mjs';
 
 export default async (req) => {
+  const { json, preflight } = responder(req);
   const env = process.env;
-  setCors(req);
-  if (req.method === 'OPTIONS')
-    return new Response(null, { status: 204, headers: { ...CORS, 'access-control-allow-headers': 'x-dash-key', 'access-control-allow-methods': 'GET, OPTIONS', 'access-control-max-age': '86400' } });
+  if (req.method === 'OPTIONS') return preflight();
   if (!env.DASH_KEY || !env.STRAVA_CLIENT_ID || !env.STRAVA_CLIENT_SECRET)
     return json({ ok: false, error: 'config' }, 500);
   if (!safeEq(req.headers.get('x-dash-key'), env.DASH_KEY)) return json({ ok: false, error: 'key' }, 401);

@@ -25,6 +25,11 @@ Despliega una vez después de crearlas.
 1. En `docs/index.html` busca `const API_BASE=""` y pon la dirección de tu Netlify, por ejemplo `const API_BASE="https://tu-funciones.netlify.app"`. Sube el cambio a GitHub (no dispara Netlify).
 2. Abre una sola vez `https://tu-funciones.netlify.app/.netlify/functions/strava-auth?key=TU_DASH_KEY`, acepta los permisos en Strava (actividades y perfil; el de perfil sirve para leer los nombres de las zapatillas) y verás "Strava conectado". El token se guarda en el servidor (Netlify Blobs), nunca en la página.
 
+## Kilómetros de amigos sincronizados
+Con tu clave puesta, la lista de amigos y sus kilómetros se guardan en tu servidor de Netlify (función `friends`, almacenados en Netlify Blobs) y se ven igual en todos tus dispositivos. Sin clave, se guardan solo en ese navegador.
+La primera vez que abres el dashboard con la clave puesta, si el servidor está vacío, sube lo que hubiera guardado en ese navegador (una sola vez). Lo que hubiera en otros dispositivos antes de poner la clave no se importa.
+Cada llamada a la función cuenta como una invocación en Netlify. El dashboard solo la hace al abrirse, al volver a la pestaña tras un minuto y al guardar o borrar.
+
 ## Privacidad y buscadores
 El dashboard lleva `noindex, nofollow, noarchive, nosnippet` (etiquetas meta) para que los buscadores bien portados no lo indexen, y el sitio de Netlify envía la cabecera `X-Robots-Tag` equivalente. No hay `robots.txt` a propósito: si bloqueara el rastreo, los buscadores no leerían el `noindex` y podrían listar igualmente la dirección. Ninguna de las dos cosas impide entrar a quien tenga el enlace; para eso está la clave. Si el repositorio de GitHub es público, su código se puede ver (no contiene claves: viven en Netlify).
 
