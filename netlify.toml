@@ -1,0 +1,15 @@
+[build]
+  # El dashboard (docs/) se sirve desde GitHub Pages. Netlify solo aloja las funciones.
+  publish = "docs"
+  functions = "netlify/functions"
+  # Código de salida 0 = se omite el despliegue. Solo se construye si cambian las funciones.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- netlify package.json netlify.toml"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Que nada del sitio de Netlify (funciones y páginas de conexión) aparezca en buscadores.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet"

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
+<meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="referrer" content="no-referrer">
+<title>Dashboard personal</title>
+<style>
+:root{--spring:cubic-bezier(.22,1,.36,1);--bg:#eef3fb;--card:#fff;--ink:#14213d;--mute:#55627d;--line:#e3e9f4;--acc:#c2410c;--okF:#18794a;--badF:#c62828;--okT:#15803d;--fut:#dde3ee;--futT:#55627d;--prog:#dc2626;--shadow:0 6px 24px rgba(30,60,120,.08);--track:#e8edf6;--h1:#dbe8fb;--h2:#fbe9df;--soft:#f3f6fc}
+:root[data-theme="dark"]{--bg:#0b1324;--card:#131d33;--ink:#eef2fb;--mute:#8d9bb8;--line:#22304d;--okT:#4ade80;--fut:#2a3a5c;--futT:#aab6cf;--prog:#f87171;--shadow:0 6px 24px rgba(0,0,0,.35);--track:#22304d;--h1:#16264a;--h2:#2a2346;--soft:#1a2742}
+html{font:16px system-ui,sans-serif;font:-apple-system-body}
+@supports (animation-timing-function:linear(0,1)){:root{--spring:linear(0, 0.0596, 0.186, 0.3294, 0.4656, 0.584, 0.6819, 0.7601, 0.821, 0.8677, 0.9029, 0.9292, 0.9487, 0.963, 0.9734, 0.9809, 0.9864, 0.9903, 0.9931, 0.9951, 0.9966, 0.9976, 0.9983, 0.9988, 1)}}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font:.9375rem/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.layout{display:flex;max-width:1280px;margin:0 auto}
+aside{width:9.5rem;flex:none;padding:24px 10px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:space-between}
+aside nav{display:flex;flex-direction:column;gap:4px}
+aside a{color:var(--mute);text-decoration:none;padding:10px 12px;border-radius:10px;font-size:0.875rem}
+aside a:first-child,aside a:hover{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+aside a:focus-visible,.pill:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.q{font-size:0.75rem;color:var(--mute);font-style:italic}
+main{flex:1;min-width:0;padding:16px 14px 40px;container-type:inline-size}
+.hero{background:linear-gradient(120deg,var(--h1),var(--h2));border-radius:20px;padding:24px 26px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.hi{color:var(--mute);font-size:0.875rem}
+h1{font-size:2.125rem;letter-spacing:-.02em;line-height:1.1}
+.mid{text-align:center;font-size:0.8125rem;color:var(--mute)}
+.mid b{display:block;color:var(--ink);font-size:0.875rem;font-weight:600}
+.wx{display:flex;align-items:center;gap:8px;font-size:0.8125rem;color:var(--mute)}
+.wx b{font-size:1.875rem;color:var(--ink);display:block;line-height:1}
+.wx svg{width:4.25rem;height:4.25rem;display:block}
+.right{display:flex;align-items:center;gap:10px}
+.pill{position:relative;border:0;border-radius:999px;background:var(--card);color:var(--ink);padding:3px;display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;cursor:pointer;box-shadow:var(--shadow);font:inherit}
+.pill::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/2);border-radius:999px;background:var(--track);transition:transform .45s var(--spring)}
+[data-theme=dark] .pill::before{transform:translateX(100%)}
+.pill span{position:relative;z-index:1;padding:6px 12px;border-radius:999px;font-size:0.8125rem;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);min-width:0;position:relative;scroll-margin-top:12px}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}
+@container (max-width:60rem){.c3,.c4,.c5{grid-column:span 6}.full{grid-column:span 12}}
+@media(max-width:900px){aside{position:static;width:auto;height:auto;padding:12px 14px 0}aside nav{flex-direction:row;overflow-x:auto}aside a{white-space:nowrap}.q{display:none}.layout{flex-direction:column}}
+@container (max-width:40rem){.c3,.c4,.c5{grid-column:span 12}}
+@media(max-width:700px){h1{font-size:1.75rem}}
+h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-items:center;gap:8px}
+.big{font-size:2.125rem;font-weight:700;letter-spacing:-.02em}
+.big small{font-size:0.9375rem;font-weight:600;color:var(--mute)}
+.up.dn{color:var(--mute)}
+.up{color:var(--okT);font-size:0.8125rem;font-weight:600;margin-left:6px}
+.sub{color:var(--mute);font-size:0.8125rem}
+.bar{height:8px;border-radius:9px;background:var(--track);overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;border-radius:9px;background:var(--prog);transform-origin:left;animation:fill .6s var(--spring) both;transition:width .6s var(--spring)}
+.row3{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin:12px 0}
+.row3 b{display:block;font-size:1.0625rem}
+.chart{display:flex;align-items:flex-end;gap:5px;height:90px;margin-top:8px}
+.chart div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:0.6875rem;color:var(--mute)}
+.chart span{transform-origin:bottom;animation:rise .6s var(--spring) both;animation-delay:calc(var(--i,0)*30ms);width:100%;border-radius:4px 4px 0 0;background:var(--bc);min-height:2px;margin-bottom:2px}
+.chart .now span{background:var(--bn)}
+.rank{list-style:none;padding:0}
+.rank li{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:10px}
+.rank li.me{background:var(--soft);font-weight:650}
+.rank em{font-style:normal;display:inline-block;width:30px;color:var(--mute);font-size:1.125rem}
+.kv{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:0.8125rem}
+.kv:last-child{border:0}.kv b{text-align:right;font-weight:600}
+.tag{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#34d399,#16a34a);display:grid;place-items:center;font-size:1.125rem;font-weight:700;color:#fff}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:0.6875rem}
+.cal .h{color:var(--mute)}
+.cal .d{padding:3px 0;border-radius:6px;border:2px solid transparent}
+.cal .w{background:var(--okF);color:#fff}
+.cal .f{background:var(--badF);color:#fff;border-radius:999px}
+.cal .p{background:var(--fut);color:var(--futT)}
+.cal .t{outline:2px solid var(--ink);outline-offset:2px}
+.leg{display:flex;gap:10px;font-size:0.6875rem;color:var(--mute);margin-top:10px;flex-wrap:wrap}
+.leg i{display:inline-block;width:.8rem;height:.8rem;border-radius:3px;margin-right:4px;border:2px solid transparent;vertical-align:-1px}
+.leg .lw{background:var(--okF)}.leg .lf{background:var(--badF);border-radius:999px}.leg .lp{background:var(--fut)}
+.form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.form label{min-width:0;font-size:0.75rem;color:var(--mute);display:flex;flex-direction:column;gap:3px}
+.form label:first-child{grid-column:span 2}
+.form input,.form select{width:100%}
+.form input,.form select,.add input{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px;min-width:0}
+.btn{grid-column:span 2;border:0;border-radius:10px;padding:10px;background:var(--acc);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.btn:focus-visible,.log button:focus-visible,.form input:focus-visible,.form select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.log{list-style:none;padding:0;margin-top:8px;font-size:0.8125rem;max-height:150px;overflow:auto}
+.log li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.log button{border:0;background:none;color:var(--ink);text-decoration:underline;cursor:pointer;font:inherit;font-size:.8125rem}
+.clk{text-align:center}
+.clk b{display:block;font-size:1.625rem;font-weight:700;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.clk span{display:block;color:var(--mute);font-size:0.8125rem;margin-top:4px}
+.link{display:inline-flex;align-items:center;background:var(--card);color:var(--ink);text-decoration:none;border-radius:999px;padding:10px 16px;font-size:0.8125rem;font-weight:600;box-shadow:var(--shadow)}
+.link:hover{background:var(--soft)}
+.link:focus-visible,.chips button:focus-visible,.add input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chips span{background:var(--soft);border-radius:999px;padding:4px 8px 4px 12px;font-size:0.8125rem;display:flex;align-items:center;gap:6px}
+.chips button{border:0;background:none;color:var(--ink);cursor:pointer;font-size:1.0625rem;line-height:1}
+.add{display:flex;gap:8px}.add input{flex:1}.add .btn{grid-column:auto;padding:8px 14px}
+.bdl{display:flex;align-items:center;gap:14px;margin:4px 0 10px}.bdl .ck{font-size:2.875rem;line-height:1}
+.nin{background:#e60012;color:#fff;overflow:hidden}
+.nin::before,.nin::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.14)}
+.nin::before{width:120px;height:120px;right:-34px;bottom:-40px}.nin::after{width:46px;height:46px;right:70px;bottom:-14px}
+.nin>*{position:relative;z-index:1}
+.nin .sub{color:#fff}
+.nin .btn:focus-visible{outline-color:#fff}
+.nin .btn{background:#fff;color:#e60012;width:100%}
+.nlogo{display:inline-block;background:#fff;color:#e60012;border-radius:999px;padding:6px 18px;margin-bottom:14px;font:800 1.1875rem/1 "Arial Rounded MT Bold","Helvetica Neue",Arial,sans-serif;letter-spacing:-.02em}
+.code{font:600 1.0625rem/1.2 ui-monospace,Menlo,monospace;margin:8px 0 14px;word-break:break-all}
+.chips button,.log button{min-width:28px;min-height:28px;padding:4px 8px}
+@media(pointer:coarse){.chips button,.log button{min-width:44px;min-height:44px}.btn,.link,.pill,.form input,.form select,.add input,aside a{min-height:44px}.pill span{display:grid;place-items:center}aside a{display:flex;align-items:center}}
+.life{display:flex;align-items:center;gap:1rem;margin-top:1rem}
+.life b{display:block;font-size:1.0625rem}
+.batt{position:relative;flex:none;display:flex;gap:3px;width:10rem;height:2.5rem;padding:4px;border:2px solid var(--ink);border-radius:10px;margin-right:8px}
+.batt::after{content:"";position:absolute;right:-9px;top:28%;height:44%;width:5px;border-radius:0 3px 3px 0;background:var(--ink)}
+.batt i{flex:1;border-radius:4px;background:var(--track)}
+.batt i.on{background:var(--prog);animation:light .6s var(--spring) both;animation-delay:calc(var(--i,0)*45ms)}
+.btn,.link,.chips button,.log button,aside a{transition:transform .35s var(--spring)}
+.btn:active,.link:active,.chips button:active,.log button:active{transform:scale(.97);transition-duration:.1s;transition-timing-function:ease-out}
+@keyframes fill{from{transform:scaleX(0)}}
+@keyframes rise{from{transform:scaleY(0)}}
+@keyframes light{from{opacity:0;transform:scale(.8)}}
+@keyframes fade{from{opacity:0}}
+:root.theming *{transition:background-color .3s ease,color .3s ease,border-color .3s ease,box-shadow .3s ease}
+@media(prefers-reduced-motion:reduce){
+  .bar i,.chart span,.batt i.on{animation:fade .2s ease both;animation-delay:0s}
+  .bar i{transition:none}
+  .pill::before{transition:none}
+  .btn,.link,.chips button,.log button,aside a{transition:none}
+  .btn:active,.link:active,.chips button:active,.log button:active{transform:none}
+}
+.runst{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:12px}
+.mini{font:inherit;font-size:0.8125rem;font-weight:600;padding:4px 12px;min-height:28px;border-radius:999px;border:1px solid var(--line,currentColor);background:transparent;color:inherit;cursor:pointer;transition:transform .1s}
+.mini:active{transform:scale(.97)}
+@media (pointer:coarse){.mini{min-height:44px}}
+.keyf{margin-top:8px}.keyf div{display:flex;gap:8px;margin-top:4px}.keyf input{flex:1;min-width:0;font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line,currentColor);background:transparent;color:inherit}
+.c8{grid-column:span 8}
+@container (max-width:60rem){.c8{grid-column:span 12}}
+.sect{grid-column:1/-1;font-size:1.125rem;margin:10px 0 -4px}
+.big2{font-size:1.75rem;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.big2 small{font-size:.875rem;font-weight:600;color:var(--mute)}
+.svgc{width:100%;height:auto;display:block;margin-top:8px}
+.svgc text{font:.6875rem system-ui,sans-serif;fill:var(--mute)}
+.svgc .ln{fill:none;stroke:var(--prog);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.svgc .ln.pj{opacity:.4}.svgc .ln.pv{stroke:var(--mute);stroke-width:2}
+.svgc .dot{fill:var(--card);stroke:var(--prog);stroke-width:2}
+.svgc .gl{stroke:var(--line);stroke-width:1}
+.svgc .tx{fill:var(--ink);font-weight:600}
+.route{width:100%;max-width:11rem;height:auto;aspect-ratio:1;background:var(--soft);border-radius:14px;display:block}
+.route path{fill:none;stroke:var(--prog);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.lastg{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.lastg>div{flex:1;min-width:8rem}
+.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}
+.tbl th{font-weight:500;color:var(--mute);text-align:left;padding:4px 0}
+.tbl td{padding:7px 0;border-top:1px solid var(--line)}
+.tbl td:not(:first-child),.tbl th:not(:first-child){text-align:right}
+.tbl b{font-size:.9375rem}
+.shoe{padding:8px 0;border-top:1px solid var(--line);font-size:.8125rem}
+.shoe:first-of-type{border:0}
+.shoe .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.shoe .bar{margin:6px 0 2px}
+.scr{overflow-x:auto;padding-bottom:4px}
+.scr:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.heat{min-width:40rem}
+.heat rect{rx:2}
+.heat .l0{fill:var(--track)}
+.heat .l1{fill:color-mix(in srgb,var(--prog) 28%,var(--card))}
+.heat .l2{fill:color-mix(in srgb,var(--prog) 50%,var(--card))}
+.heat .l3{fill:color-mix(in srgb,var(--prog) 75%,var(--card))}
+.heat .l4{fill:var(--prog)}
+.heat .tdy{stroke:var(--ink);stroke-width:1.5}
+.scale{display:inline-flex;align-items:center;gap:3px;vertical-align:middle}
+.scale i{width:.75rem;height:.75rem;border-radius:3px;display:inline-block}
+.scale .l0{background:var(--track)}.scale .l1{background:color-mix(in srgb,var(--prog) 28%,var(--card))}.scale .l2{background:color-mix(in srgb,var(--prog) 50%,var(--card))}.scale .l3{background:color-mix(in srgb,var(--prog) 75%,var(--card))}.scale .l4{background:var(--prog)}
+.lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.75rem;color:var(--mute);margin-top:8px}
+.lg .sw{display:inline-block;width:1.25rem;height:0;border-top:3px solid var(--prog);vertical-align:middle;margin-right:6px;border-radius:2px}
+.lg .sw.pj{opacity:.4}.lg .sw.pv{border-color:var(--mute)}
+.pend{font-size:.75rem;color:var(--mute);margin-top:8px}
+.note{margin-top:16px;color:var(--mute);font-size:0.75rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <nav><a href="#top">Inicio</a><a href="#deporte">Deporte</a><a href="#gaming">Gaming</a><a href="#trabajo">Trabajo</a><a href="#vida">Vida</a></nav>
+  <p class="q">“Una vida bien vivida es la mejor estrategia.”</p>
+</aside>
+<main id="top">
+<div class="hero">
+  <div><div class="hi" id="greet"></div><h1 id="name"></h1><div class="hi">“Disciplina hoy, resultados mañana.”</div></div>
+  <div class="clk"><b id="clock"></b><span id="today"></span><span id="place"></span></div>
+  <div class="wx"><span id="wxIcon"></span><div><b id="wxT"></b><span id="wxTxt"></span></div></div>
+  <div class="right"><a class="link" href="https://dashboar-castellon.netlify.app/" target="_blank" rel="noopener">Dashboard Castellón</a><button class="pill" id="themeBtn" aria-label="Cambiar entre modo claro y oscuro"><span>Claro</span><span>Oscuro</span></button></div>
+</div>
+
+<div class="grid">
+  <section class="card c4" id="deporte"><h2>Running</h2>
+    <div class="big"><span id="runMonth"></span> <small>km</small><span class="up" id="runUp"></span></div>
+    <div class="sub">de <span id="runGoal"></span> km este mes</div>
+    <div class="bar"><i id="runBar"></i></div>
+    <div class="row3"><div><b id="runYear"></b><span class="sub">Este año</span></div><div><b id="runTotal"></b><span class="sub">Total</span></div><div><b id="runActs"></b><span class="sub">Actividades</span></div></div>
+    <div class="sub">Kilómetros por mes</div><div class="chart" id="runChart" style="--bc:var(--prog);--bn:var(--ink)"></div>
+    <div class="runst"><span class="sub" id="runSt" role="status"></span><button class="mini" id="runBtn" type="button">Conectar Strava</button></div>
+    <form class="keyf" id="keyF" hidden><label class="sub" for="keyI">Clave de tu dashboard</label><div><input id="keyI" type="password" autocomplete="current-password" required><button class="mini" type="submit">Guardar</button></div></form>
+  </section>
+  <section class="card c4"><h2>Ranking de amigos</h2><div class="sub" id="rankMonth" style="margin:-6px 0 8px"></div>
+    <ul class="rank" id="rank"></ul><div class="sub" id="rankGap"></div><div class="bar"><i id="rankBar"></i></div>
+  </section>
+<section class="card c4 full"><h2>Añadir kilómetros</h2>
+    <div class="form"><label>Amigo<select id="fN"></select></label><label>Fecha<input type="date" id="fD"></label><label>Kilómetros<input type="number" id="fK" step="0.1" min="0" inputmode="decimal" placeholder="0,0"></label><button class="btn" id="fAdd">Guardar</button></div>
+    <div class="sub" id="fMsg" role="status" style="min-height:18px;margin-top:6px"></div>
+    <ul class="log" id="log"></ul>
+    <div class="sub" style="margin-top:12px">Amigos del ranking</div>
+    <div class="chips" id="chips"></div>
+    <div class="add"><input id="aN" placeholder="Nombre" maxlength="20" aria-label="Nombre del amigo"><button class="btn" id="aAdd">Añadir</button></div>
+  </section>
+
+  <h2 class="sect" id="analisis">Análisis de running</h2>
+  <section class="card c4" id="anPace"></section>
+  <section class="card c4" id="anLast"></section>
+  <section class="card c4" id="anPrs"></section>
+  <section class="card c8" id="anCal"></section>
+  <section class="card c4" id="anStreak"></section>
+  <section class="card c8" id="anProj"></section>
+  <section class="card c4" id="anShoes"></section>
+
+  <section class="card c3" id="gaming"><h2>Xbox</h2>
+    <div class="tag"><div class="av">F</div><div><b id="xbTag"></b><div class="sub"><span id="xbG"></span> G</div></div></div>
+    <div class="kv"><span class="sub">Logros</span><b id="xbA"></b></div>
+    <div class="kv"><span class="sub">Último logro</span><b id="xbL"></b></div>
+  </section>
+  <section class="card c3"><h2>Steam</h2>
+    <div class="big" id="stH"></div><div class="sub">en total</div>
+    <div class="kv"><span class="sub">Últimas 2 semanas</span><b id="st2"></b></div>
+    <div class="chart" id="stChart" style="height:40px;--bc:var(--prog);--bn:var(--ink)"></div>
+    <div class="kv"><span class="sub">Más jugado</span><b id="stM"></b></div>
+  </section>
+  <section class="card c3"><h2>PlayStation</h2>
+    <div class="big"><small>Nivel</small> <span id="psL"></span></div>
+    <div class="kv"><span class="sub">Platino · Oro</span><b id="ps1"></b></div>
+    <div class="kv"><span class="sub">Plata · Bronce</span><b id="ps2"></b></div>
+    <div class="kv"><span class="sub">Último trofeo</span><b id="psLast"></b></div>
+  </section>
+  <section class="card c3 nin">
+    <div class="nlogo" role="img" aria-label="Nintendo">Nintendo</div>
+    <div class="sub">Código de amigo</div><div class="code" id="nsCode"></div>
+    <button class="btn" id="nsCopy">Copiar código</button>
+  </section>
+  <section class="card c4" id="trabajo"><h2>Trabajo</h2>
+    <div class="sub" id="calTitle" style="margin-bottom:8px"></div><div class="cal" id="cal" role="list" aria-label="Calendario de trabajo del mes"></div>
+    <div class="leg"><span><i class="lw"></i>Trabajado</span><span><i class="lf"></i>No trabajo</span><span><i class="lp"></i>Por venir</span></div>
+  </section>
+
+  <section class="card c4" id="vida"><h2>Jubilación</h2>
+    <div class="big" style="font-size:1.625rem" id="jubLeft"></div><div class="sub" id="jubDate"></div>
+    <div class="bar"><i id="jubBar"></i></div>
+    <div class="row3"><div><b id="cotDays"></b><span class="sub">días cotizados</span></div><div><b id="cotGoal"></b><span class="sub">días objetivo</span></div><div><b id="cotPct"></b><span class="sub">completado</span></div></div>
+  </section>
+  <section class="card c4 full"><h2>Cumpleaños</h2>
+    <div class="bdl"><span class="ck" aria-hidden="true">🎂</span><div><div class="big"><small>Faltan</small> <span id="bdDays"></span> <small>días</small></div><div class="sub">para tu cumpleaños número <b id="bdAge"></b>, el <span id="bdDate"></span></div></div></div>
+    <div class="bar"><i id="bdBar"></i></div><div class="sub" id="bdTime" style="font-variant-numeric:tabular-nums"></div>
+    <div class="life"><div class="batt" id="battery" role="img"></div><b>Life</b></div>
+  </section>
+</div>
+<p class="note">Los kilómetros de Fede vienen de Strava cuando está conectado; el resto son datos de ejemplo. Edita el objeto DATA al principio del script. Para guardar los kilómetros de tus amigos en la nube, rellena dbUrl.</p>
+</main>
+</div>
+
+<script>
+// ===== DATOS DE EJEMPLO: sustitúyelos o conecta Strava, Steam, Firebase, etc. =====
+const DATA={
+  name:"Fede",city:"Castellón de la Plana",country:"España",weather:{t:18,kind:"sun",txt:"Soleado"},lat:39.9864,lon:-0.0513,
+  run:{goalMonth:100,year:924,total:4582,acts:12,vsPrev:12,months:[48,62,55,71,66,80,52,74,90,82.4,0,0]},
+  amigos:["Sergi","Raúl"],dbUrl:"",
+  xbox:{tag:"FedeNavarro",score:57683,ach:33611,last:"Lobo solitario · Halo Infinite · hace 3 días"},
+  steam:{hours:4287,two:13.2,bars:[3,5,2,6,4,8,7,5,9,6],top:"Factorio · 312 h"},
+  ps:{level:412,plat:12,gold:102,silver:432,bronze:2981,last:"Maestro del destino · Final Fantasy XVI · hace 5 días"},
+  nintendo:{code:"SW-0000-0000-0000"},
+  cot:{days:4912,goal:13140},jubilacion:"2058-05-14",nacimiento:"1976-02-26",
+  turnos:{cycleWork:5,cycleOff:2,start:"2026-01-01"}
+};
+// ==============================================================================
+const $=id=>document.getElementById(id),fmt=(n,d=0)=>n.toLocaleString("es-ES",{useGrouping:"always",minimumFractionDigits:d,maximumFractionDigits:d});
+const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),h=now.getHours(),y=now.getFullYear(),m=now.getMonth();
+const bars=(v,l,c)=>{const mx=Math.max(...v,1);return v.map((x,i)=>`<div class="${i===c?"now":""}" style="--i:${i}"><span style="height:${x/mx*80}%"></span>${l?l[i]:""}</div>`).join("")};
+const pb=(id,p,l)=>{const i=$(id),b=i.parentElement;i.style.width=p+"%";if(!b.hasAttribute("role")){b.setAttribute("role","progressbar");b.setAttribute("aria-valuemin","0");b.setAttribute("aria-valuemax","100");b.setAttribute("aria-label",l)}b.setAttribute("aria-valuenow",Math.round(p))};
+const img=(id,l)=>{const e=$(id);e.setAttribute("role","img");e.setAttribute("aria-label",l)};
+
+// Cabecera
+$("greet").textContent=(h<6?"Buenas noches":h<13?"Buenos días":h<21?"Buenas tardes":"Buenas noches")+",";
+$("name").textContent=DATA.name;
+$("today").textContent=now.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+$("place").textContent=DATA.city+", "+DATA.country;
+const W={
+sun:'<circle cx="20" cy="20" r="7" fill="#f5b301"/><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M31.3 8.7l-2.8 2.8M11.5 28.5l-2.8 2.8" stroke="#f5b301" stroke-width="2.5" stroke-linecap="round"/>',
+partly:'<circle cx="14" cy="14" r="6" fill="#f5b301"/><path transform="translate(6 6) scale(.85)" d="M12 30a7 7 0 010-14 9 9 0 0117 2 6 6 0 01-1 12z" fill="#9fb0cc"/>',
+cloud:'<path d="M12 30a7 7 0 010-14 9 9 0 0117 2 6 6 0 01-1 12z" fill="#9fb0cc"/>',
+rain:'<path transform="translate(0 -5)" d="M12 30a7 7 0 010-14 9 9 0 0117 2 6 6 0 01-1 12z" fill="#9fb0cc"/><path d="M14 31l-2 5M21 31l-2 5M28 31l-2 5" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>',
+wind:'<g fill="none" stroke="#7aa2d6" stroke-width="2.5" stroke-linecap="round"><path d="M6 14h20a4 4 0 10-4-4"/><path d="M6 22h26a4 4 0 11-4 4"/><path d="M6 30h12a3 3 0 11-3 3"/></g>',
+cold:'<path d="M20 5v30M7 12.5l26 15M7 27.5l26-15" stroke="#5eb6e8" stroke-width="2.5" stroke-linecap="round"/>'};
+function wxKind(c,t,w){if(w>=35)return["wind","Viento"];if(t<=5)return["cold","Frío"];if(c===0)return["sun","Soleado"];if(c<=2)return["partly","Parcialmente nublado"];if(c<=48)return["cloud",c>=45?"Niebla":"Nublado"];if(c<=67)return["rain","Lluvia"];if(c<=77)return["cold","Nieve"];if(c<=82)return["rain","Chubascos"];if(c<=86)return["cold","Nieve"];return["rain","Tormenta"]}
+function setWx(k,t,txt){$("wxIcon").innerHTML=`<svg viewBox="0 0 40 40" aria-hidden="true">${W[k]}</svg>`;$("wxT").textContent=Math.round(t)+"°C";$("wxTxt").textContent=txt}
+setWx(DATA.weather.kind,DATA.weather.t,DATA.weather.txt);
+fetch(`https://api.open-meteo.com/v1/forecast?latitude=${DATA.lat}&longitude=${DATA.lon}&current=temperature_2m,weather_code,wind_speed_10m`).then(x=>x.json()).then(j=>{const c=j.current,k=wxKind(c.weather_code,c.temperature_2m,c.wind_speed_10m);setWx(k[0],c.temperature_2m,k[1])}).catch(()=>{});
+
+// Tema: claro por defecto
+const root=document.documentElement;
+let themeTimer;
+function setTheme(t,animate){if(animate){root.classList.add("theming");clearTimeout(themeTimer);themeTimer=setTimeout(()=>root.classList.remove("theming"),400)}root.dataset.theme=t;try{localStorage.setItem("theme",t)}catch(e){}}
+let saved="light";try{saved=localStorage.getItem("theme")||"light"}catch(e){}
+setTheme(saved);$("themeBtn").onclick=()=>setTheme(root.dataset.theme==="dark"?"light":"dark",true);
+
+// Running (datos de Strava vía función de Netlify; si no hay conexión se usan los de ejemplo)
+const MES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const DEMO={"ok":true,"updated":"2026-10-16T08:00:00.000Z","months":[91,68.9,111.3,145.5,118.6,130.9,90.9,119.5,56,90.2,0,0],"monthsPrev":[106.7,109.7,126.5,85.4,60.4,140.6,74.9,134.6,105.2,77.7,87.2,74.3],"monthKm":90.2,"year":1022.7,"acts":9,"yearActs":106,"vsPrev":147,"pace":{"month":325,"year":329},"time":{"month":29321,"year":336002},"elev":{"month":660,"year":7487},"hr":{"month":148,"year":148},"paceMonths":[330,330,332,330,327,330,327,328,321,325,null,null],"km84":272,"weekdays":[190.3,46.1,226.5,12.3,131.6,324.2,91.7],"days":{"2025-10-12":10.5,"2025-10-13":7.3,"2025-10-20":7.1,"2025-10-25":14,"2025-10-27":8.2,"2025-11-05":5.2,"2025-11-07":5,"2025-11-13":7.2,"2025-11-17":10.1,"2025-11-19":6.3,"2025-11-22":21,"2025-11-23":6.7,"2025-11-24":10.5,"2025-11-26":8.7,"2025-11-30":6.6,"2025-12-01":7.4,"2025-12-03":5.3,"2025-12-04":8.7,"2025-12-08":5.8,"2025-12-10":9.5,"2025-12-22":8.8,"2025-12-24":7.2,"2025-12-28":9,"2025-12-29":5.1,"2025-12-31":7.5,"2026-01-02":10.7,"2026-01-04":5.2,"2026-01-11":8.1,"2026-01-12":5.1,"2026-01-14":9.1,"2026-01-20":8.2,"2026-01-21":8.2,"2026-01-23":5.3,"2026-01-24":7.4,"2026-01-28":9.4,"2026-01-31":14.3,"2026-02-02":9.8,"2026-02-04":6.9,"2026-02-08":6.4,"2026-02-11":5.7,"2026-02-13":10.4,"2026-02-15":7.6,"2026-02-16":7.8,"2026-02-18":7.6,"2026-02-25":6.5,"2026-03-02":10,"2026-03-08":8.5,"2026-03-09":9.5,"2026-03-11":5.8,"2026-03-14":19.1,"2026-03-21":21.4,"2026-03-22":9.8,"2026-03-24":10.4,"2026-03-27":8,"2026-03-30":8.9,"2026-04-01":9.9,"2026-04-03":9.2,"2026-04-04":7.6,"2026-04-06":9.2,"2026-04-10":7.2,"2026-04-11":18.6,"2026-04-13":8.6,"2026-04-15":9.5,"2026-04-17":10.5,"2026-04-20":10.3,"2026-04-22":7.1,"2026-04-25":18.5,"2026-04-27":9.8,"2026-04-29":9.6,"2026-05-01":5.7,"2026-05-09":10.8,"2026-05-11":8.9,"2026-05-12":7.3,"2026-05-13":9.7,"2026-05-15":6.4,"2026-05-17":6.6,"2026-05-18":8.4,"2026-05-20":5.9,"2026-05-22":6.3,"2026-05-23":19.6,"2026-05-24":7,"2026-05-26":5.7,"2026-05-27":10.3,"2026-06-03":6.8,"2026-06-05":9.4,"2026-06-06":21.2,"2026-06-07":6.5,"2026-06-08":8.3,"2026-06-09":8.7,"2026-06-10":9.1,"2026-06-13":19.7,"2026-06-15":10.8,"2026-06-17":8.8,"2026-06-20":7.9,"2026-06-22":6.7,"2026-06-24":7,"2026-07-01":10.1,"2026-07-03":8,"2026-07-04":20.6,"2026-07-06":10.5,"2026-07-13":8.9,"2026-07-18":16.5,"2026-07-24":9.9,"2026-07-30":6.3,"2026-08-08":10.9,"2026-08-12":8.9,"2026-08-15":19.5,"2026-08-19":5.4,"2026-08-21":8.3,"2026-08-22":19,"2026-08-23":8.2,"2026-08-24":8.6,"2026-08-26":9.3,"2026-08-29":21.3,"2026-09-01":5.9,"2026-09-06":7.6,"2026-09-09":8.8,"2026-09-11":7,"2026-09-16":7.3,"2026-09-21":5.7,"2026-09-23":8.6,"2026-09-28":5.2,"2026-10-01":6,"2026-10-02":9.5,"2026-10-03":16.3,"2026-10-04":10,"2026-10-05":10.6,"2026-10-07":6.6,"2026-10-10":14.1,"2026-10-12":8.6,"2026-10-14":8.5},"streak":{"days":0,"weeks":43,"bestWeekKm":48.1,"bestWeekStart":"2025-08-25","runDays":106},"last":{"id":235,"name":"Carrera de mañana","date":"2026-10-14","time":"07:40","km":8.5,"sec":2678,"pace":315,"hr":147,"elev":81,"poly":"_z`sFrbEuHoCaHuAyFUiEt@sCdCeBrEcA~Gs@bJy@xKmAbMqB|MsCdNuD`NgEnMeErLkDnKwBjJs@dI\\fHrBjG`ExFbGnFlHlF`IlF~HrFjHvFjGtFhFjFlExE~DzD~DnClEtAhFTjGu@jHeC~HsE`I_HlHcJbGyK`EcMrB}M\\eNs@aNwBoMkDsLeEoKgEkJuDeIsCgHqBkGmAyFy@oFs@mFcAmFeBsFsCwFiEuFyFkFaHyEuH{D"},"gear":[{"id":"g2","name":"Nike Pegasus 41","km":412.6,"kmRuns":412.6,"retired":false,"last":"2026-10-16"},{"id":"g1","name":"Hoka Clifton 9","km":688.2,"kmRuns":688.2,"retired":false,"last":"2026-03-30"}],"gearErr":false,"prs":{"items":{"1k":{"t":306,"id":185,"d":"2026-05-24"},"5k":{"t":1529,"id":178,"d":"2026-05-13"},"10k":{"t":3100,"id":113,"d":"2025-11-17"},"Half-Marathon":{"t":6911,"id":155,"d":"2026-03-21"}},"scanned":188,"total":235,"pending":47},"total":4582,"totalActs":640};
+let S=DEMO,r={...DATA.run,months:DEMO.months,year:DEMO.year,total:DEMO.total,acts:DEMO.acts,vsPrev:DEMO.vsPrev},live=false,afterRun=()=>{};
+function paintRun(){
+  const cur=r.months[m];
+  $("runMonth").textContent=fmt(cur,1);$("runGoal").textContent=r.goalMonth;
+  const up=$("runUp");if(r.vsPrev==null){up.textContent="";up.removeAttribute("title")}else{up.textContent=(r.vsPrev>0?"+":"")+r.vsPrev+"%";up.title="Frente al mismo periodo del mes anterior";up.classList.toggle("dn",r.vsPrev<0)}
+  pb("runBar",Math.min(100,cur/r.goalMonth*100),"Progreso del objetivo mensual de running");
+  $("runYear").textContent=fmt(r.year)+" km";$("runTotal").textContent=fmt(r.total)+" km";$("runActs").textContent=r.acts;
+  $("runChart").innerHTML=bars(r.months,MES,m);
+  const best=r.months.indexOf(Math.max(...r.months.slice(0,m+1)));
+  img("runChart",`Kilómetros por mes ${y}: `+r.months.slice(0,m+1).map((v,i)=>`${MES[i]} ${fmt(v,1)}`).join(", ")+`. Mejor mes: ${MES[best]}, ${fmt(r.months[best],1)} km.`);
+}
+paintRun();
+// Si el dashboard está en GitHub Pages, pon aquí la dirección de tu sitio de Netlify (sin barra final). Vacío = mismo sitio.
+const API_BASE="";
+const SK="dashKey",SC="stravaCache";
+const sget=k=>{try{return localStorage.getItem(k)}catch(e){return null}},sset=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+const ago=t=>{const mi=Math.round((Date.now()-new Date(t))/6e4);return mi<2?"ahora mismo":mi<60?`hace ${mi} min`:mi<1440?`hace ${Math.round(mi/60)} h`:`hace ${Math.round(mi/1440)} d`};
+function runStatus(t,btn){$("runSt").textContent=t;$("runBtn").textContent=btn||"Actualizar";$("runBtn").hidden=false}
+function useStrava(d,note){
+  if(!d||!Array.isArray(d.months)||d.months.length!==12||!d.days||!d.streak||!d.prs)return false;
+  r={...DATA.run,months:d.months,year:d.year,total:d.total,acts:d.acts,vsPrev:d.vsPrev};S=d;live=true;paintRun();
+  afterRun();
+  runStatus((note||"Strava")+" · actualizado "+ago(d.updated),"Actualizar");return true;
+}
+const ERR={key:"La clave no es correcta.",config:"Falta configurar Netlify (variables de entorno).",not_connected:"Strava no está conectado todavía.",rate:"Strava pide esperar un poco. Inténtalo en unos minutos.",api:"Strava no responde ahora mismo.",unknown:"No se pudo leer Strava."};
+async function loadStrava(force){
+  const key=sget(SK);
+  if(!key){runStatus("Datos de ejemplo.","Conectar Strava");return}
+  $("runBtn").disabled=true;runStatus("Actualizando…","Actualizar");
+  try{
+    const res=await fetch(API_BASE+"/.netlify/functions/strava"+(force?"?force=1":""),{headers:{"x-dash-key":key}});
+    let d=null;try{d=await res.json()}catch(e){}
+    if(res.ok&&d&&d.ok&&useStrava(d)){sset(SC,JSON.stringify(d));if(d.stale)runStatus("Strava no responde, mostrando datos de "+ago(d.updated),"Reintentar");else scanPrs(key)}
+    else{
+      if(d&&d.error==="key"){sset(SK,null);runStatus(ERR.key,"Introducir clave")}
+      else runStatus((d&&ERR[d.error])||ERR.unknown,"Reintentar");
+    }
+  }catch(e){runStatus(location.protocol==="file:"?"Strava solo funciona con el dashboard publicado (GitHub Pages o Netlify).":"Sin conexión con el servidor.","Reintentar")}
+  $("runBtn").disabled=false;
+}
+async function scanPrs(key){
+  // Cada paso analiza unas 20 carreras antiguas; se limita para no agotar el cupo de Strava.
+  for(let i=0;i<4&&S&&S.prs&&S.prs.pending>0;i++){
+    await new Promise(ok=>setTimeout(ok,1500));
+    try{
+      const res=await fetch(API_BASE+"/.netlify/functions/strava?step=efforts",{headers:{"x-dash-key":key}});
+      const d=await res.json();
+      if(!res.ok||!d.ok||!useStrava(d))return;
+      sset(SC,JSON.stringify(d));
+      if(d.error==="rate")return;
+    }catch(e){return}
+  }
+}
+try{const c=JSON.parse(sget(SC)||"null");if(c&&new Date(c.updated).getFullYear()===y&&sget(SK))useStrava(c,"Strava (guardado)")}catch(e){}
+$("runBtn").onclick=()=>{if(!sget(SK)){$("keyF").hidden=false;$("keyI").focus()}else loadStrava(true)};
+$("keyF").onsubmit=ev=>{ev.preventDefault();const v=$("keyI").value.trim();if(!v)return;sset(SK,v);$("keyI").value="";$("keyF").hidden=true;loadStrava(true)};
+
+// Ranking y kilómetros de amigos
+// Si pones dbUrl (Firebase Realtime Database) se guarda en la nube; si no, solo en este navegador.
+const U=DATA.dbUrl.replace(/\/$/,""),ym=y+"-"+String(m+1).padStart(2,"0");
+let E=[],A=[...DATA.amigos];
+const ls=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+const msg=t=>{$("fMsg").textContent=t},esc=t=>String(t).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
+const RM=matchMedia("(prefers-reduced-motion: reduce)"),SPRING=getComputedStyle(document.documentElement).getPropertyValue("--spring").trim()||"ease";
+function flip(list,prev){if(RM.matches)return;[...list.children].forEach(li=>{const o=prev[li.dataset.n];if(o==null)return;const d=o-li.getBoundingClientRect().top;if(Math.abs(d)<1)return;try{li.animate([{transform:`translateY(${d}px)`},{transform:"none"}],{duration:600,easing:SPRING,fill:"backwards"})}catch(e){}})}
+function render(){
+  const prev={};[...$("rank").children].forEach(li=>{prev[li.dataset.n]=li.getBoundingClientRect().top});
+  const fr=[...A.map(n=>({n,km:E.filter(e=>e.n===n&&e.d.startsWith(ym)).reduce((a,e)=>a+e.km,0)})),{n:DATA.name,km:r.months[m],me:true}].sort((a,b)=>b.km-a.km);
+  $("rankMonth").textContent=now.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+  $("rank").innerHTML=fr.map((f,i)=>`<li data-n="${esc(f.n)}" class="${f.me?"me":""}"><span><em>${["🥇","🥈","🥉"][i]||i+1}</em>${esc(f.n)}</span><span>${fmt(f.km,1)} km</span></li>`).join("");
+  flip($("rank"),prev);
+  const ix=fr.findIndex(f=>f.me);
+  if(ix>0){$("rankGap").textContent=`Te faltan ${fmt(fr[ix-1].km-fr[ix].km,1)} km para alcanzar a ${fr[ix-1].n}`;pb("rankBar",fr[ix].km/fr[ix-1].km*100,"Distancia al amigo de delante")}
+  else{$("rankGap").textContent="Vas primero. A mantener la ventaja.";pb("rankBar",100,"Distancia al amigo de delante")}
+  const sel=$("fN").value;$("fN").innerHTML=A.map(n=>`<option>${esc(n)}</option>`).join("");if(A.includes(sel))$("fN").value=sel;
+  $("chips").innerHTML=A.map(n=>`<span>${esc(n)}<button data-n="${esc(n)}" aria-label="Quitar a ${esc(n)}">&times;</button></span>`).join("")||'<span class="sub">Sin amigos todavía.</span>';
+  $("log").innerHTML=E.filter(e=>A.includes(e.n)).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,8).map(e=>`<li><span>${esc(e.n)} · ${new Date(e.d+"T00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})} · ${fmt(e.km,1)} km</span><button data-id="${esc(e.id)}">Borrar</button></li>`).join("")||'<li class="sub">Aún no hay kilómetros guardados.</li>';
+}
+async function load(){try{if(U){const o=await(await fetch(U+"/km.json")).json()||{};E=Object.entries(o).map(([id,v])=>({id,...v}));const a=await(await fetch(U+"/amigos.json")).json();if(Array.isArray(a))A=a}else{E=ls("km")||[];A=ls("amigos")||A}}catch(e){E=ls("km")||[];A=ls("amigos")||A;msg("No se pudo conectar con la base de datos.")}render()}
+async function saveA(){try{if(U)await fetch(U+"/amigos.json",{method:"PUT",body:JSON.stringify(A)});else ls("amigos",A)}catch(x){msg("No se pudo guardar la lista de amigos.")}}
+async function add(n,d,km){const e={n,d,km};try{if(U)e.id=(await(await fetch(U+"/km.json",{method:"POST",body:JSON.stringify(e)})).json()).name;else e.id=""+Date.now();E.push(e);if(!U)ls("km",E);msg("Guardado: "+n+", "+fmt(km,1)+" km.")}catch(x){msg("No se pudo guardar. Inténtalo de nuevo.")}render()}
+async function del(id){try{if(U)await fetch(U+"/km/"+id+".json",{method:"DELETE"});E=E.filter(e=>e.id!==id);if(!U)ls("km",E);msg("Borrado.")}catch(x){msg("No se pudo borrar.")}render()}
+$("fD").value=new Date(now-now.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+$("fAdd").onclick=()=>{const km=parseFloat($("fK").value);if(!$("fN").value){msg("Añade primero un amigo.");return}if(!(km>0)){msg("Introduce los kilómetros.");return}if(!$("fD").value){msg("Elige la fecha.");return}add($("fN").value,$("fD").value,km);$("fK").value=""};
+$("log").onclick=ev=>{const b=ev.target.closest("button");if(b)del(b.dataset.id)};
+$("aAdd").onclick=()=>{const n=$("aN").value.trim();if(!n)return;if([...A,DATA.name].some(a=>a.toLowerCase()===n.toLowerCase())){msg("Ese nombre ya está en el ranking.");return}A.push(n);$("aN").value="";saveA();msg(n+" añadido.");render()};
+$("chips").onclick=ev=>{const b=ev.target.closest("button");if(!b)return;A=A.filter(a=>a!==b.dataset.n);saveA();msg(b.dataset.n+" quitado del ranking.");render()};
+
+// ---------- Análisis de running ----------
+const pc=s=>{if(s==null)return"–";const t=Math.round(s);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")};
+const dur=s=>{let h=Math.floor(s/3600),mi=Math.round(s%3600/60);if(mi===60){h++;mi=0}return h?`${h} h ${String(mi).padStart(2,"0")} min`:`${mi} min`};
+const clk=s=>{const t=Math.round(s),h=Math.floor(t/3600),mi=Math.floor(t%3600/60),se=t%60;return h?`${h}:${String(mi).padStart(2,"0")}:${String(se).padStart(2,"0")}`:`${mi}:${String(se).padStart(2,"0")}`};
+const dshort=s=>s?new Date(s+"T00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short",year:"numeric"}):"";
+const xe=t=>String(t).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
+const MESL=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function dec(s){let i=0,la=0,lo=0;const o=[];while(i<s.length){let b,sh=0,v=0;do{b=s.charCodeAt(i++)-63;v|=(b&31)<<sh;sh+=5}while(b>=32&&i<=s.length);la+=v&1?~(v>>1):v>>1;sh=0;v=0;do{b=s.charCodeAt(i++)-63;v|=(b&31)<<sh;sh+=5}while(b>=32&&i<=s.length);lo+=v&1?~(v>>1):v>>1;o.push([la/1e5,lo/1e5])}return o}
+const GEAR_LIFE=700,GOAL_YEAR=1200;
+const cw=id=>Math.max(260,Math.round(($(id).clientWidth||340)-32));
+function anPace(d){
+  const pts=d.paceMonths.map((p,i)=>({p,i})).filter(o=>o.p!=null&&o.i<=m);
+  let svg='<div class="sub">Sin carreras este año todavía.</div>';
+  if(pts.length){
+    const W=cw("anPace"),H=104,L=10,R=10,T=14,B=18,mn0=Math.min(...pts.map(o=>o.p)),mx0=Math.max(...pts.map(o=>o.p)),mid=(mn0+mx0)/2,span=Math.max(mx0-mn0,30),mn=mid-span/2*1.15,mx=mid+span/2*1.15;
+    const X=i=>L+i*(W-L-R)/11,Y=p=>T+(p-mn)/(mx-mn)*(H-T-B);
+    const line=pts.map(o=>X(o.i).toFixed(1)+","+Y(o.p).toFixed(1)).join(" ");
+    const lastp=pts[pts.length-1];
+    svg=`<svg class="svgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ritmo medio por mes en ${y}: ${pts.map(o=>MES[o.i]+" "+pc(o.p)+" por km").join(", ")}. Mejor mes: ${MES[pts.reduce((a,b)=>b.p<a.p?b:a).i]}.">
+      <line class="gl" x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}"/>
+      ${pts.length>1?`<polyline class="ln" points="${line}"/>`:""}
+      ${pts.map(o=>`<circle class="dot" cx="${X(o.i).toFixed(1)}" cy="${Y(o.p).toFixed(1)}" r="4"><title>${MESL[o.i]}: ${pc(o.p)} /km</title></circle>`).join("")}
+      <text class="tx" x="${Math.min(X(lastp.i),W-R-14).toFixed(1)}" y="${(Y(lastp.p)-9).toFixed(1)}" text-anchor="middle">${pc(lastp.p)}</text>
+      ${MES.map((n,i)=>`<text x="${X(i).toFixed(1)}" y="${H-4}" text-anchor="middle">${n}</text>`).join("")}</svg>
+      <div class="sub">Más arriba, más rápido.</div>`;
+  }
+  $("anPace").innerHTML=`<h2>Ritmo y tiempo</h2>
+    <div class="big2">${pc(d.pace.month)} <small>/km este mes</small></div>
+    <div class="sub">${d.pace.year?`Este año ${pc(d.pace.year)} /km de media`:""}</div>
+    <div class="row3"><div><b>${d.time.month?dur(d.time.month):"–"}</b><span class="sub">Tiempo del mes</span></div><div><b>${d.elev.month?"+"+fmt(d.elev.month)+" m":"–"}</b><span class="sub">Desnivel del mes</span></div><div><b>${d.hr.month?d.hr.month+" ppm":"–"}</b><span class="sub">FC media</span></div></div>
+    ${svg}<div class="sub" style="margin-top:6px">Este año: ${dur(d.time.year)} corriendo, +${fmt(d.elev.year)} m</div>`;
+}
+function anLast(d){
+  const l=d.last;
+  if(!l){$("anLast").innerHTML='<h2>Última carrera</h2><div class="sub">Aún no hay carreras.</div>';return}
+  let route='<div class="route" role="img" aria-label="Sin ruta registrada" style="display:grid;place-items:center;color:var(--mute);font-size:.8125rem;text-align:center;padding:8px">Sin ruta</div>';
+  try{
+    const pts=l.poly?dec(l.poly):[];
+    if(pts.length>2){
+      const k=Math.cos(pts[0][0]*Math.PI/180),xs=pts.map(p=>p[1]*k),ys=pts.map(p=>-p[0]),x0=Math.min(...xs),y0=Math.min(...ys),sc=84/Math.max(Math.max(...xs)-x0,Math.max(...ys)-y0,1e-9),ox=(100-(Math.max(...xs)-x0)*sc)/2,oy=(100-(Math.max(...ys)-y0)*sc)/2;
+      route=`<svg class="route" viewBox="0 0 100 100" role="img" aria-label="Mapa de la ruta de la última carrera, ${fmt(l.km,1)} kilómetros"><path d="M${pts.map((p,i)=>((xs[i]-x0)*sc+ox).toFixed(1)+" "+((ys[i]-y0)*sc+oy).toFixed(1)).join("L")}"/></svg>`;
+    }
+  }catch(e){}
+  $("anLast").innerHTML=`<h2>Última carrera</h2><div class="lastg">${route}<div>
+    <div class="big2">${fmt(l.km,1)} <small>km</small></div><div class="sub">${xe(l.name)}</div><div class="sub">${dshort(l.date)}${l.time?" · "+l.time:""}</div></div></div>
+    <div class="row3"><div><b>${pc(l.pace)} /km</b><span class="sub">Ritmo</span></div><div><b>${dur(l.sec)}</b><span class="sub">Tiempo</span></div><div><b>${l.hr?l.hr+" ppm":"–"}</b><span class="sub">FC media</span></div><div><b>+${fmt(l.elev)} m</b><span class="sub">Desnivel</span></div></div>`;
+}
+function anPrs(d){
+  const NAMES=[["1k","1 km",1],["5k","5 km",5],["10k","10 km",10],["Half-Marathon","Media maratón",21.0975],["Marathon","Maratón",42.195]],p=d.prs||{items:{}};
+  const rows=NAMES.filter(n=>p.items[n[0]]).map(n=>{const it=p.items[n[0]];return`<tr><td>${n[1]}</td><td><b>${clk(it.t)}</b></td><td>${pc(it.t/n[2])} /km</td><td>${dshort(it.d)}</td></tr>`}).join("");
+  $("anPrs").innerHTML=`<h2>Mejores marcas</h2>${rows?`<table class="tbl"><thead><tr><th scope="col">Distancia</th><th scope="col">Tiempo</th><th scope="col">Ritmo</th><th scope="col">Fecha</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub">Todavía no hay marcas calculadas.</div>'}
+    ${p.pending>0?`<div class="pend" role="status">Analizando tu historial: ${p.scanned} de ${p.total} carreras. Se completa solo en las próximas visitas.</div>`:""}`;
+}
+function anCal(d){
+  const CS=13,today0=new Date(y,m,now.getDate()),tn=Math.round(Date.UTC(y,m,now.getDate())/864e5),dow=(today0.getDay()+6)%7,start=tn-dow-52*7;
+  let cells="",mlab="",lastM=-1,n=0,tot=0,kmT=0;
+  for(let w=0;w<53;w++){
+    for(let k=0;k<7;k++){
+      const dn=start+w*7+k;if(dn>tn)continue;
+      const ds=new Date(dn*864e5).toISOString().slice(0,10),km=d.days[ds]||0,lv=km<=0?0:km<5?1:km<10?2:km<15?3:4;
+      if(km>0){n++;kmT+=km}
+      if(k===0){const mo=+ds.slice(5,7)-1;if(mo!==lastM&&w<51){mlab+=`<text x="${28+w*CS}" y="10">${MES[mo]}</text>`}lastM=mo}
+      cells+=`<rect class="l${lv}${dn===tn?" tdy":""}" x="${28+w*CS}" y="${18+k*CS}" width="11" height="11"><title>${dshort(ds)}: ${km>0?fmt(km,1)+" km":"sin carrera"}</title></rect>`;
+    }
+  }
+  $("anCal").innerHTML=`<h2>Calendario de actividad</h2><div class="sub">${n} días corridos en los últimos 12 meses, ${fmt(kmT)} km</div>
+    <div class="scr" tabindex="0" role="region" aria-label="Calendario de actividad, se desplaza horizontalmente"><svg class="svgc heat" viewBox="0 0 ${28+53*CS} ${18+7*CS}" role="img" aria-label="Mapa de calor de carreras: ${n} días con carrera en los últimos 12 meses, ${fmt(kmT)} kilómetros en total. Cuanto más oscuro, más kilómetros ese día.">
+      ${mlab}<text x="0" y="${18+0*CS+9}">Lun</text><text x="0" y="${18+2*CS+9}">Mié</text><text x="0" y="${18+4*CS+9}">Vie</text>${cells}</svg></div>
+    <div class="lg"><span>Menos <span class="scale" aria-hidden="true"><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span> Más</span><span>Sin carrera · menos de 5 km · 5 a 10 km · 10 a 15 km · más de 15 km</span></div>
+    <div class="sub" style="margin-top:16px">Kilómetros por día de la semana (${y})</div>
+    <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem;max-width:28rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)))}</div>`;
+  const sc=$("anCal").querySelector(".scr");if(sc)sc.scrollLeft=sc.scrollWidth;
+  const DN=["lunes","martes","miércoles","jueves","viernes","sábado","domingo"],mxi=d.weekdays.indexOf(Math.max(...d.weekdays));
+  img("wdChart","Kilómetros por día de la semana este año: "+DN.map((n,i)=>`${n} ${fmt(d.weekdays[i])}`).join(", ")+`. El día más activo es ${DN[mxi]}.`);
+}
+function anStreak(d){
+  const s=d.streak,tn=Math.round(Date.UTC(y,m,now.getDate())/864e5),dow=(new Date(y,m,now.getDate()).getDay()+6)%7,ws=new Date((tn-dow)*864e5).toISOString().slice(0,10);
+  const wk=Object.entries(d.days).filter(([k])=>k>=ws).reduce((a,[,v])=>a+v,0);
+  $("anStreak").innerHTML=`<h2>Racha</h2>
+    <div class="row3"><div><b class="big2">${s.weeks}</b><span class="sub">Semanas seguidas</span></div><div><b class="big2">${s.days}</b><span class="sub">Días seguidos</span></div></div>
+    <div class="kv"><span class="sub">Esta semana</span><b>${fmt(wk,1)} km</b></div>
+    <div class="bar"><i id="wkBar"></i></div>
+    <div class="kv"><span class="sub">Mejor semana</span><b>${fmt(s.bestWeekKm,1)} km${s.bestWeekStart?" · "+dshort(s.bestWeekStart):""}</b></div>
+    <div class="kv"><span class="sub">Días corridos este año</span><b>${s.runDays}</b></div>`;
+  pb("wkBar",s.bestWeekKm>0?Math.min(100,wk/s.bestWeekKm*100):0,"Kilómetros de esta semana frente a tu mejor semana");
+}
+function anProj(d){
+  const doy=Math.floor((today-new Date(y,0,0))/864e5),left=(y%4===0?366:365)-doy;
+  const projA=left>0?d.year+d.km84/84*left:d.year;
+  const needed=GOAL_YEAR*doy/(y%4===0?366:365),diff=d.year-needed;
+  const cum=a=>{let t=0;return a.map(v=>t+=v)};
+  const cT=cum(d.months).slice(0,m+1),cP=cum(d.monthsPrev);
+  const W=cw("anProj"),nar=W<420,H=190,L=40,R=nar?58:104,T=12,B=22,ymax=Math.max(projA,cP[11],GOAL_YEAR,1)*1.05;
+  const X=i=>L+i*(W-L-R)/11,Y=v=>T+(1-v/ymax)*(H-T-B);
+  const P=a=>a.map((v,i)=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ");
+  const proj=[[m,d.year],[11,projA]].map(([i,v])=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ");
+  const lab=(txt,yy,cls)=>`<text class="${cls||""}" x="${W-R+6}" y="${yy.toFixed(1)}">${txt}</text>`;
+  const labs=[{t:nar?fmt(Math.round(projA)):`Previsión ${fmt(Math.round(projA))}`,y:Y(projA)+4,c:"tx"},{t:nar?fmt(Math.round(cP[11])):`${y-1}: ${fmt(Math.round(cP[11]))}`,y:Y(cP[11])+4},{t:nar?fmt(GOAL_YEAR):"Objetivo "+fmt(GOAL_YEAR),y:Y(GOAL_YEAR)+4}].sort((a,b)=>a.y-b.y);
+  for(let i=1;i<labs.length;i++)if(labs[i].y-labs[i-1].y<14)labs[i].y=labs[i-1].y+14;
+  const grid=[0,.5,1].map(f=>{const v=ymax/1.05*f,yy=Y(v);return`<line class="gl" x1="${L}" x2="${W-R}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text x="${L-6}" y="${(yy+4).toFixed(1)}" text-anchor="end">${fmt(Math.round(v/10)*10)}</text>`}).join("");
+  const goalY=Y(GOAL_YEAR);
+  $("anProj").innerHTML=`<h2>Proyección anual</h2>
+    <div class="row3"><div><b class="big2">≈ ${fmt(Math.round(projA))} <small>km</small></b><span class="sub">a fin de año, con tu ritmo de las últimas 12 semanas</span></div>
+    <div><b class="big2">${fmt(d.year)} <small>km</small></b><span class="sub">llevas este año${GOAL_YEAR?`, de ${fmt(GOAL_YEAR)} de objetivo`:""}</span></div></div>
+    <div class="bar"><i id="projBar"></i></div>
+    <div class="sub">${diff>=0?`Vas ${fmt(Math.round(diff))} km por delante del ritmo para llegar a ${fmt(GOAL_YEAR)} km.`:`Vas ${fmt(Math.round(-diff))} km por detrás del ritmo para llegar a ${fmt(GOAL_YEAR)} km.`}</div>
+    <svg class="svgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Kilómetros acumulados: este año ${fmt(d.year)}, proyección a diciembre ${fmt(Math.round(projA))}, año anterior ${fmt(Math.round(cP[11]))} en total.">
+      ${grid}<line class="gl" x1="${L}" x2="${W-R}" y1="${goalY.toFixed(1)}" y2="${goalY.toFixed(1)}" style="stroke:var(--mute)"/>
+      <polyline class="ln pv" points="${P(cP)}"/><polyline class="ln pj" points="${proj}"/><polyline class="ln" points="${P(cT)}"/>
+      ${cT.map((v,i)=>`<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.5"><title>${MESL[i]}: ${fmt(Math.round(v))} km acumulados (${y})</title></circle>`).join("")}
+      ${cP.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="7" fill="transparent"><title>${MESL[i]}: ${fmt(Math.round(v))} km acumulados (${y-1})</title></circle>`).join("")}
+      ${labs.map(l=>lab(l.t,l.y,l.c)).join("")}
+      ${MES.map((n,i)=>nar&&i%2?"":`<text x="${X(i).toFixed(1)}" y="${H-4}" text-anchor="middle">${n}</text>`).join("")}</svg>
+    <div class="lg"><span><i class="sw"></i>${y}</span><span><i class="sw pj"></i>Previsión</span><span><i class="sw pv"></i>${y-1}</span>${nar?`<span>Cifras a la derecha: previsión, ${y-1} y objetivo</span>`:""}</div>`;
+  pb("projBar",Math.min(100,d.year/GOAL_YEAR*100),"Progreso hacia el objetivo anual de kilómetros");
+}
+function anShoes(d){
+  const g=d.gear||[];
+  $("anShoes").innerHTML=`<h2>Zapatillas</h2>${g.length?g.map(z=>{const p=Math.min(100,z.km/GEAR_LIFE*100),old=z.km>=GEAR_LIFE;return`<div class="shoe"><div class="top"><b>${xe(z.name||"Zapatillas sin nombre")}</b><span>${fmt(z.km,0)} km${old?" · toca cambiarlas":z.km>=GEAR_LIFE*.85?" · cerca del límite":""}</span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${GEAR_LIFE}" aria-valuenow="${Math.round(Math.min(z.km,GEAR_LIFE))}" aria-label="Kilómetros de ${xe(z.name||"zapatillas")} sobre ${GEAR_LIFE} de vida útil"><i style="width:${p}%"></i></div><div class="sub">Vida útil orientativa ${GEAR_LIFE} km${z.last?" · último uso "+dshort(z.last):""}</div></div>`}).join(""):'<div class="sub">No hay zapatillas asignadas a tus carreras. Asígnalas en Strava (Mi rendimiento → Equipamiento).</div>'}
+    ${d.gearErr?'<div class="pend">Falta el permiso de perfil para leer los nombres. Repite la conexión de Strava (paso 4 de la guía).</div>':""}`;
+}
+function paintAn(){const d=S;[anPace,anLast,anPrs,anCal,anStreak,anProj,anShoes].forEach(f=>{try{f(d)}catch(e){console.error(f.name,e)}})}
+render();afterRun=()=>{render();paintAn()};paintAn();load();loadStrava();
+let lastW=0;try{new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(lastW&&w!==lastW){try{anPace(S);anProj(S)}catch(e){}}lastW=w}).observe(document.querySelector('main'))}catch(e){}
+
+
+// Gaming
+const x=DATA.xbox;$("xbTag").textContent=x.tag;$("xbG").textContent=fmt(x.score);$("xbA").textContent=fmt(x.ach);$("xbL").textContent=x.last;
+$("stH").textContent=fmt(DATA.steam.hours)+" h";$("st2").textContent="+"+fmt(DATA.steam.two,1)+" h";$("stM").textContent=DATA.steam.top;
+$("stChart").innerHTML=bars(DATA.steam.bars,null,DATA.steam.bars.length-1);
+img("stChart","Actividad reciente en Steam (horas): "+DATA.steam.bars.join(", "));
+const p=DATA.ps;$("psL").textContent=p.level;$("ps1").textContent=p.plat+" · "+p.gold;$("ps2").textContent=fmt(p.silver)+" · "+fmt(p.bronze);$("psLast").textContent=p.last;
+$("nsCode").textContent=DATA.nintendo.code;$("nsCopy").onclick=async()=>{const b=$("nsCopy");try{await navigator.clipboard.writeText(DATA.nintendo.code);b.textContent="Copiado"}catch(e){b.textContent="No se pudo copiar"}setTimeout(()=>b.textContent="Copiar código",1500)};
+
+// Calendario de trabajo (ciclo de ejemplo)
+const T=DATA.turnos,cyc=T.cycleWork+T.cycleOff,st=new Date(T.start+"T00:00");
+const dim=new Date(y,m+1,0).getDate(),first=(new Date(y,m,1).getDay()+6)%7;
+let cal="LMXJVSD".split("").map(d=>`<div class="h" aria-hidden="true">${d}</div>`).join("")+'<div aria-hidden="true"></div>'.repeat(first);
+for(let d=1;d<=dim;d++){const dt=new Date(y,m,d),k=Math.round((dt-st)/864e5),work=((k%cyc)+cyc)%cyc<T.cycleWork;
+const c=dt>today?"p":work?"w":"f",isT=dt.getTime()===today.getTime();
+cal+=`<div class="d ${c}${isT?" t":""}" role="listitem" aria-label="${d}, ${c==="p"?"por venir":c==="w"?"trabajado":"no trabajo"}${isT?", hoy":""}">${d}</div>`}
+$("cal").innerHTML=cal;$("calTitle").textContent=now.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+
+// Jubilación y cotización
+const jd=new Date(DATA.jubilacion+"T00:00");let yy=jd.getFullYear()-y,mm=jd.getMonth()-m,dd=jd.getDate()-now.getDate();
+if(dd<0){mm--;dd+=new Date(y,m,0).getDate()}if(mm<0){yy--;mm+=12}
+$("jubLeft").textContent=`${yy} años, ${mm} meses y ${dd} días`;
+$("jubDate").textContent="Fecha estimada: "+jd.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
+const pct=DATA.cot.days/DATA.cot.goal*100;
+pb("jubBar",pct,"Días cotizados sobre el objetivo");$("cotDays").textContent=fmt(DATA.cot.days);$("cotGoal").textContent=fmt(DATA.cot.goal);$("cotPct").textContent=Math.round(pct)+"%";
+
+// Reloj y cumpleaños: cuenta atrás en vivo
+const LIFE_CELLS=10;
+$("battery").innerHTML=Array.from({length:LIFE_CELLS},(_,i)=>`<i style="--i:${i}"></i>`).join("");
+let lifeKey="";
+function lifeBatt(lp){
+  const f=Math.round(lp/100*LIFE_CELLS),w=lp<15?"Acabas de empezar":lp<40?"Con mucho por delante":lp<46?"Casi a la mitad":lp<=54?"A la mitad":lp<70?"Pasada la mitad":lp<90?"En la segunda mitad":"Recta final";
+  const k=f+w;if(k===lifeKey)return;lifeKey=k;
+  [...$("battery").children].forEach((c,i)=>c.classList.toggle("on",i<f));
+  $("battery").setAttribute("aria-label","Life: "+w.toLowerCase());
+}
+function cd(n){
+  const bd=new Date(DATA.nacimiento+"T00:00"),mo0=bd.getMonth(),d0=bd.getDate();
+  let nb=new Date(n.getFullYear(),mo0,d0);if(nb<=n)nb=new Date(n.getFullYear()+1,mo0,d0);
+  const pv=new Date(nb.getFullYear()-1,mo0,d0),ms=nb-n,z=v=>String(v).padStart(2,"0");
+  $("bdDays").textContent=Math.floor(ms/864e5);
+  $("bdAge").textContent=nb.getFullYear()-bd.getFullYear();
+  $("bdTime").textContent=`${z(Math.floor(ms%864e5/36e5))} h ${z(Math.floor(ms%36e5/6e4))} min ${z(Math.floor(ms%6e4/1e3))} s`;
+  $("bdDate").textContent=nb.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
+  pb("bdBar",(n-pv)/(nb-pv)*100,"Progreso hasta tu próximo cumpleaños");
+  const b100=new Date(bd.getFullYear()+100,mo0,d0),lp=Math.min(100,(n-bd)/(b100-bd)*100);
+  lifeBatt(lp);
+}
+function tick(){const n=new Date();$("clock").textContent=n.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit",second:"2-digit"});cd(n)}
+tick();setInterval(tick,1000);
+</script>
+</body>
+</html>
