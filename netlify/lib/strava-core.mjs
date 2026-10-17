@@ -113,6 +113,9 @@ export function aggregate(activities, today) {
 }
 
 // ---------- Análisis ampliado ----------
+// Strava usa estos nombres, pero se comparan sin mayúsculas ni separadores por si cambian ("Half Marathon", "5K"...).
+const normName = n => String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const PR_BY_NORM = { '1k': '1k', '5k': '5k', '10k': '10k', 'halfmarathon': 'Half-Marathon', 'marathon': 'Marathon' };
 export const PR_NAMES = { '1k': 1, '5k': 5, '10k': 10, 'Half-Marathon': 21.0975, 'Marathon': 42.195 };
 export const EFFORT_BATCH = 20;
 const dayNum = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 86400000;
@@ -195,7 +198,8 @@ export async function stepEfforts({ env, store, fetchImpl = fetch, now = Date.no
   const index = (await store.get('runs', { type: 'json' }).catch(() => null)) || [];
   const done = (await store.get('efforts', { type: 'json' }).catch(() => null)) || {};
   const todo = index.filter(r => !done[r.id]).sort((a, b) => b.d.localeCompare(a.d)).slice(0, batch);
-  let rateHit = false;
+  let rateHit = false, failed = 0, lastStatus = null;
+  const seen = new Set();
   if (todo.length) {
     const token = await getAccessToken({ env, store, fetchImpl, now });
     await pool(todo, 5, async r => {
@@ -203,16 +207,23 @@ export async function stepEfforts({ env, store, fetchImpl = fetch, now = Date.no
       try {
         const det = await api(`/activities/${r.id}`, token, fetchImpl);
         const ef = {};
-        for (const b of det.best_efforts || []) if (b.name in PR_NAMES && b.elapsed_time > 0) ef[b.name] = Math.min(ef[b.name] ?? Infinity, b.elapsed_time);
+        for (const b of det.best_efforts || []) {
+          seen.add(b.name);
+          const k = PR_BY_NORM[normName(b.name)];
+          if (k && b.elapsed_time > 0) ef[k] = Math.min(ef[k] ?? Infinity, b.elapsed_time);
+        }
         done[r.id] = ef;
       } catch (e) {
         if (e.kind === 'rate') rateHit = true;
         else if (e.status === 404) done[r.id] = {};
+        else { failed++; lastStatus = e.status || e.kind || 'red'; }
       }
     });
     await store.setJSON('efforts', done);
   }
-  return { prs: buildPrs(done, index), rate: rateHit };
+  const prs = buildPrs(done, index);
+  prs.diag = { tried: todo.length, failed, lastStatus, rate: rateHit, names: [...seen].slice(0, 20), at: new Date(now).toISOString() };
+  return { prs, rate: rateHit };
 }
 
 async function loadGear(ids, token, store, fetchImpl, now) {

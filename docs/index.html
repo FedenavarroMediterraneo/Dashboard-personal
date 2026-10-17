@@ -369,10 +369,10 @@ async function scanPrs(key){
     try{
       const res=await fetch(API_BASE+"/.netlify/functions/strava?step=efforts",{headers:{"x-dash-key":key}});
       const d=await res.json();
-      if(!res.ok||!d.ok||!useStrava(d))return;
+      if(!res.ok||!d.ok||!useStrava(d)){if(S&&S.prs)S.prs.why=d&&d.error==="nodata"?"Falta cargar primero tus carreras: pulsa Actualizar.":"El servidor no ha podido analizar (error "+(d&&d.error||res.status)+").";anPrs(S);return}
       sset(SC,JSON.stringify(d));
       if(d.error==="rate")return;
-    }catch(e){return}
+    }catch(e){if(S&&S.prs){S.prs.why="Sin conexión con el servidor para analizar tus carreras.";anPrs(S)}return}
   }
 }
 try{const c=JSON.parse(sget(SC)||"null");if(c&&new Date(c.updated).getFullYear()===y&&sget(SK))useStrava(c,"Strava (guardado)")}catch(e){}
@@ -481,11 +481,16 @@ function anLast(d){
     <div class="big2">${fmt(l.km,1)} <small>km</small></div><div class="sub">${xe(l.name)}</div><div class="sub">${dshort(l.date)}${l.time?" · "+l.time:""}</div></div></div>
     <div class="row3"><div><b>${pc(l.pace)} /km</b><span class="sub">Ritmo</span></div><div><b>${dur(l.sec)}</b><span class="sub">Tiempo</span></div><div><b>${l.hr?l.hr+" ppm":"–"}</b><span class="sub">FC media</span></div><div><b>+${fmt(l.elev)} m</b><span class="sub">Desnivel</span></div></div>`;
 }
+function why(p){const g=p.diag||{};
+  if(p.why)return" "+p.why;
+  if(g.rate)return" Strava ha pedido esperar (límite de peticiones); se reintenta en unos 15 minutos.";
+  if(g.failed)return" Strava ha rechazado "+g.failed+" peticiones (código "+g.lastStatus+").";
+  return""}
 function anPrs(d){
   const NAMES=[["1k","1 km",1],["5k","5 km",5],["10k","10 km",10],["Half-Marathon","Media maratón",21.0975],["Marathon","Maratón",42.195]],p=d.prs||{items:{}};
   const rows=NAMES.filter(n=>p.items[n[0]]).map(n=>{const it=p.items[n[0]];return`<tr><td>${n[1]}</td><td><b>${clk(it.t)}</b></td><td>${pc(it.t/n[2])} /km</td><td>${dshort(it.d)}</td></tr>`}).join("");
-  $("anPrs").innerHTML=`<h2>Mejores marcas</h2>${rows?`<table class="tbl"><thead><tr><th scope="col">Distancia</th><th scope="col">Tiempo</th><th scope="col">Ritmo</th><th scope="col">Fecha</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub">Todavía no hay marcas calculadas.</div>'}
-    ${p.pending>0?`<div class="pend" role="status">Analizando tu historial: ${p.scanned} de ${p.total} carreras. Se completa solo en las próximas visitas.</div>`:""}`;
+  $("anPrs").innerHTML=`<h2>Mejores marcas</h2>${rows?`<table class="tbl"><thead><tr><th scope="col">Distancia</th><th scope="col">Tiempo</th><th scope="col">Ritmo</th><th scope="col">Fecha</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub">'+(p.pending===0&&p.total>0?'Strava no ha devuelto mejores marcas en tus carreras (suele pasar con actividades sin GPS detallado).':'Todavía no hay marcas calculadas.')+'</div>'}
+    ${p.pending>0?`<div class="pend" role="status">Analizando tu historial: ${p.scanned} de ${p.total} carreras. Se completa solo en las próximas visitas.${why(p)}</div>`:""}`;
 }
 function anCal(d){
   const CS=13,today0=new Date(y,m,now.getDate()),tn=Math.round(Date.UTC(y,m,now.getDate())/864e5),dow=(today0.getDay()+6)%7,start=tn-dow-52*7;
