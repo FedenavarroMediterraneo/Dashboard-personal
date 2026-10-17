@@ -325,7 +325,7 @@ function paintRun(){
 }
 paintRun();
 // Si el dashboard está en GitHub Pages, pon aquí la dirección de tu sitio de Netlify (sin barra final). Vacío = mismo sitio.
-const API_BASE="";
+const API_BASE="https://fedenavarrodashboard.netlify.app";
 const SK="dashKey",SC="stravaCache";
 const sget=k=>{try{return localStorage.getItem(k)}catch(e){return null}},sset=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
 const ago=t=>{const mi=Math.round((Date.now()-new Date(t))/6e4);return mi<2?"ahora mismo":mi<60?`hace ${mi} min`:mi<1440?`hace ${Math.round(mi/60)} h`:`hace ${Math.round(mi/1440)} d`};
