@@ -328,6 +328,8 @@ paintRun();
 const API_BASE="https://fedenavarrodashboard.netlify.app";
 const SK="dashKey",SC="stravaCache";
 const sget=k=>{try{return localStorage.getItem(k)}catch(e){return null}},sset=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+// Enlace de configuración: abrir la página con #key=TU_CLAVE guarda la clave en este dispositivo y la quita de la dirección.
+try{const hm=location.hash.match(/[#&]key=([^&]+)/);if(hm){sset(SK,decodeURIComponent(hm[1]));history.replaceState(null,"",location.pathname+location.search)}}catch(e){}
 const ago=t=>{const mi=Math.round((Date.now()-new Date(t))/6e4);return mi<2?"ahora mismo":mi<60?`hace ${mi} min`:mi<1440?`hace ${Math.round(mi/60)} h`:`hace ${Math.round(mi/1440)} d`};
 function runStatus(t,btn){$("runSt").textContent=t;$("runBtn").textContent=btn||"Actualizar";$("runBtn").hidden=false}
 function useStrava(d,note){

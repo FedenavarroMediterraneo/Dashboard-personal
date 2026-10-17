@@ -28,6 +28,9 @@ Despliega una vez después de crearlas.
 ## Privacidad y buscadores
 El dashboard lleva `noindex, nofollow, noarchive, nosnippet` (etiquetas meta) para que los buscadores bien portados no lo indexen, y el sitio de Netlify envía la cabecera `X-Robots-Tag` equivalente. No hay `robots.txt` a propósito: si bloqueara el rastreo, los buscadores no leerían el `noindex` y podrían listar igualmente la dirección. Ninguna de las dos cosas impide entrar a quien tenga el enlace; para eso está la clave. Si el repositorio de GitHub es público, su código se puede ver (no contiene claves: viven en Netlify).
 
+## Configurar la clave en un dispositivo nuevo
+La clave se guarda por dispositivo y navegador. Para no teclearla, abre una vez en ese dispositivo `https://TU-USUARIO.github.io/TU-REPO/#key=TU_DASH_KEY`. La página guarda la clave y la quita de la dirección. Después usa la dirección normal. No compartas ese enlace, porque contiene tu clave.
+
 ## 5. Usar el dashboard
 Abre tu GitHub Pages. En la tarjeta Running pulsa "Conectar Strava", escribe tu `DASH_KEY` y listo. Se guarda en ese navegador; en otro dispositivo hay que escribirla una vez.
 Los datos se piden como mucho cada 15 minutos (caché del servidor) y el botón "Actualizar" fuerza una lectura.
