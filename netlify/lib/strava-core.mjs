@@ -114,6 +114,8 @@ export function aggregate(activities, today) {
 
 // ---------- Análisis ampliado ----------
 // Strava usa estos nombres, pero se comparan sin mayúsculas ni separadores por si cambian ("Half Marathon", "5K"...).
+// v2: descarta los análisis antiguos que dieron vacío (nombres mal leídos) y vuelve a analizar todo.
+const EFFORTS_KEY = 'efforts_v2';
 const normName = n => String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const PR_BY_NORM = { '1k': '1k', '5k': '5k', '10k': '10k', 'halfmarathon': 'Half-Marathon', 'marathon': 'Marathon' };
 export const PR_NAMES = { '1k': 1, '5k': 5, '10k': 10, 'Half-Marathon': 21.0975, 'Marathon': 42.195 };
@@ -196,7 +198,7 @@ async function pool(items, n, fn) {
 // Procesa un lote de carreras sin analizar para sacar sus mejores esfuerzos (1 petición por carrera).
 export async function stepEfforts({ env, store, fetchImpl = fetch, now = Date.now(), batch = EFFORT_BATCH }) {
   const index = (await store.get('runs', { type: 'json' }).catch(() => null)) || [];
-  const done = (await store.get('efforts', { type: 'json' }).catch(() => null)) || {};
+  const done = (await store.get(EFFORTS_KEY, { type: 'json' }).catch(() => null)) || {};
   const todo = index.filter(r => !done[r.id]).sort((a, b) => b.d.localeCompare(a.d)).slice(0, batch);
   let rateHit = false, failed = 0, lastStatus = null;
   const seen = new Set();
@@ -219,7 +221,7 @@ export async function stepEfforts({ env, store, fetchImpl = fetch, now = Date.no
         else { failed++; lastStatus = e.status || e.kind || 'red'; }
       }
     });
-    await store.setJSON('efforts', done);
+    await store.setJSON(EFFORTS_KEY, done);
   }
   const prs = buildPrs(done, index);
   prs.diag = { tried: todo.length, failed, lastStatus, rate: rateHit, names: [...seen].slice(0, 20), at: new Date(now).toISOString() };
@@ -294,7 +296,7 @@ export async function fetchDashboardData({ env, store, fetchImpl = fetch, now = 
   let gear = [...used].map(([id, u]) => ({ id, name: gc[id]?.name || null, km: r1(gc[id]?.km ?? u.km), kmRuns: r1(u.km), retired: !!gc[id]?.retired, last: u.last.slice(0, 10) }));
   const active = gear.filter(g => !g.retired);
   gear = (active.length ? active : gear).sort((a, b) => b.last.localeCompare(a.last)).slice(0, 6);
-  const done = (await store.get('efforts', { type: 'json' }).catch(() => null)) || {};
+  const done = (await store.get(EFFORTS_KEY, { type: 'json' }).catch(() => null)) || {};
   return {
     ok: true, updated: now.toISOString(), ...agg, ...ana, gear, gearErr,
     prs: buildPrs(done, index),
