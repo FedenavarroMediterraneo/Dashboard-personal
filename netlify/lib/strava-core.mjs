@@ -132,7 +132,8 @@ export function trim(a) {
   };
 }
 
-export function analyze(runs, today) {
+// others: actividades que no son carreras ({d}); solo cuentan para las rachas (caminatas, pilates, etc.).
+export function analyze(runs, today, others = []) {
   const { y, m, d } = today, todayN = Date.UTC(y, m - 1, d) / 86400000;
   const mk = () => ({ km: 0, t: 0, e: 0, hrT: 0, hrW: 0 });
   const mon = Array.from({ length: 12 }, mk), yr = mk();
@@ -157,11 +158,16 @@ export function analyze(runs, today) {
   const hr = b => (b.hrT > 0 ? Math.round(b.hrW / b.hrT) : null);
   const cm = mon[m - 1];
   // rachas
-  let dayStreak = 0, c = days.has(todayN) ? todayN : todayN - 1;
-  while (days.has(c)) { dayStreak++; c--; }
+  const actDays = new Set(days.keys()), actWeeks = new Set(weeks.keys());
+  for (const o of others) {
+    if (!/^\d{4}-\d{2}-\d{2}/.test(String(o.d))) continue;
+    const n = dayNum(o.d); actDays.add(n); actWeeks.add(weekStart(n));
+  }
+  let dayStreak = 0, c = actDays.has(todayN) ? todayN : todayN - 1;
+  while (actDays.has(c)) { dayStreak++; c--; }
   const thisW = weekStart(todayN);
-  let weekStreak = 0; c = weeks.has(thisW) ? thisW : thisW - 7;
-  while (weeks.has(c)) { weekStreak++; c -= 7; }
+  let weekStreak = 0; c = actWeeks.has(thisW) ? thisW : thisW - 7;
+  while (actWeeks.has(c)) { weekStreak++; c -= 7; }
   let best = null;
   for (const [w, km] of weeks) if (!best || km > best.km) best = { w, km };
   const cal = {};
@@ -250,7 +256,7 @@ const toRaw = r => ({ start_date_local: r.d, distance: r.km * 1000, sport_type: 
 // recoger ediciones y borrados.
 export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date() }) {
   const saved = await store.get('activities', { type: 'json' }).catch(() => null);
-  const full = !saved || !Array.isArray(saved.runs) || !saved.fullAt || now.getTime() - new Date(saved.fullAt).getTime() > FULL_RESYNC_MS;
+  const full = !saved || !Array.isArray(saved.runs) || !Array.isArray(saved.others) || !saved.fullAt || now.getTime() - new Date(saved.fullAt).getTime() > FULL_RESYNC_MS;
   const after = full ? '' : `after=${Math.max(0, (saved.syncedAt || 0) - SYNC_MARGIN_S)}&`;
   const fetched = [];
   for (let page = 1; page <= 15; page++) {
@@ -259,26 +265,30 @@ export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date
     if (batch.length < 200) break;
   }
   const fresh = fetched.filter(a => RUN_TYPES.has(a.sport_type || a.type)).map(trim);
-  let runs;
-  if (full) runs = fresh;
+  const freshOthers = fetched.filter(a => !RUN_TYPES.has(a.sport_type || a.type)).map(a => ({ id: a.id, d: String(a.start_date_local || '') }));
+  let runs, others;
+  if (full) { runs = fresh; others = freshOthers; }
   else {
     const byId = new Map(saved.runs.map(r => [r.id, r]));
     for (const r of fresh) byId.set(r.id, r);
     runs = [...byId.values()];
+    const oById = new Map(saved.others.map(r => [r.id, r]));
+    for (const r of freshOthers) oById.set(r.id, r);
+    others = [...oById.values()];
   }
   let newest = null;
   for (const r of runs) if (!newest || r.d > newest.d) newest = r;
   for (const r of runs) if (r !== newest) r.p = null; // la ruta solo hace falta de la última carrera
   await store.setJSON('activities', {
-    syncedAt: Math.floor(now.getTime() / 1000), fullAt: full ? now.toISOString() : saved.fullAt, runs,
+    syncedAt: Math.floor(now.getTime() / 1000), fullAt: full ? now.toISOString() : saved.fullAt, runs, others,
   });
-  return { runs, full };
+  return { runs, others, full };
 }
 
 export async function fetchDashboardData({ env, store, fetchImpl = fetch, now = new Date() }) {
   const token = await getAccessToken({ env, store, fetchImpl, now: now.getTime() });
   const today = madridNow(now);
-  const { runs } = await syncRuns({ token, store, fetchImpl, now });
+  const { runs, others } = await syncRuns({ token, store, fetchImpl, now });
   const index = runs.filter(r => r.km >= 1).map(r => ({ id: r.id, d: r.d }));
   await store.setJSON('runs', index);
   let athleteId = (await store.get('athlete', { type: 'json' }).catch(() => null))?.id;
@@ -288,7 +298,7 @@ export async function fetchDashboardData({ env, store, fetchImpl = fetch, now = 
   }
   const stats = await api(`/athletes/${athleteId}/stats`, token, fetchImpl);
   const agg = aggregate(runs.map(toRaw), today);
-  const ana = analyze(runs, today);
+  const ana = analyze(runs, today, others);
   // zapatillas
   const used = new Map();
   for (const r of runs) if (r.g) { const u = used.get(r.g) || { km: 0, last: '' }; u.km += r.km; if (r.d > u.last) u.last = r.d; used.set(r.g, u); }

@@ -175,6 +175,15 @@ await t('estado firmado: válido, manipulado, caducado, vacío', async () => {
   assert.ok(checkState('k', st, 2000)); assert.ok(!checkState('otra', st, 2000));
   assert.ok(!checkState('k', st, 1000 + 11 * 60000)); assert.ok(!checkState('k', '', 2000)); assert.ok(!checkState('k', 'x.y', 2000));
 });
+await t('racha: cuentan caminatas y pilates, los km siguen siendo solo de carreras', async () => {
+  // hoy = viernes 2026-10-16; solo hay carrera el 15/10, pero hay actividad otras semanas
+  const runs = [run(1, '2026-10-15', 5)].map(trim);
+  const others = [{ id: 9, d: '2026-10-14T08:00:00Z' }, { id: 10, d: '2026-10-07T08:00:00Z' }, { id: 11, d: '2026-09-30T08:00:00Z' }, { id: 12, d: '2026-09-15T08:00:00Z' }];
+  const a = analyze(runs, { y: 2026, m: 10, d: 16 }, others);
+  assert.equal(a.streak.weeks, 3); // semanas del 12/10, 5/10 y 28/9; la del 21/9 está vacía
+  assert.equal(a.streak.days, 2); // 14 y 15
+  assert.equal(a.streak.runDays, 1); assert.equal(analyze(runs, { y: 2026, m: 10, d: 16 }).streak.weeks, 1);
+});
 await t('safeEq', async () => { assert.ok(safeEq('ab', 'ab')); assert.ok(!safeEq('ab', 'ac')); assert.ok(!safeEq('', '')); assert.ok(!safeEq(null, 'a')); });
 
 if (n) { console.log(n + ' fallos'); process.exit(1); } else console.log('todo OK');

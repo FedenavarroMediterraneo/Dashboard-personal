@@ -58,6 +58,10 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 .chart div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:0.6875rem;color:var(--mute)}
 .chart span{transform-origin:bottom;animation:rise .6s var(--spring) both;animation-delay:calc(var(--i,0)*30ms);width:100%;border-radius:4px 4px 0 0;background:var(--bc);min-height:2px;margin-bottom:2px}
 .chart .now span{background:var(--bn)}
+.chart div{position:relative;outline:none}
+.chart div[data-t]:hover::after,.chart div[data-t]:focus::after{content:attr(data-t);position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--ink);color:var(--card,#fff);font-size:.75rem;line-height:1;padding:5px 7px;border-radius:6px;z-index:5;pointer-events:none}
+.chart div:first-child[data-t]:hover::after,.chart div:first-child[data-t]:focus::after{left:0;transform:none}
+.chart div:last-child[data-t]:hover::after,.chart div:last-child[data-t]:focus::after{left:auto;right:0;transform:none}
 .rank{list-style:none;padding:0}
 .rank li{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:10px}
 .rank li.me{background:var(--soft);font-weight:650}
@@ -195,8 +199,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 <div class="grid">
   <section class="card c4" id="deporte"><h2>Running</h2>
     <div class="big"><span id="runMonth"></span> <small>km</small><span class="up" id="runUp"></span></div>
-    <div class="sub">de <span id="runGoal"></span> km este mes</div>
-    <div class="bar"><i id="runBar"></i></div>
+    <div class="sub">km este mes</div>
     <div class="row3"><div><b id="runYear"></b><span class="sub">Este año</span></div><div><b id="runTotal"></b><span class="sub">Total</span></div><div><b id="runActs"></b><span class="sub">Actividades</span></div></div>
     <div class="sub">Kilómetros por mes</div><div class="chart" id="runChart" style="--bc:var(--prog);--bn:var(--ink)"></div>
     <div class="runst"><span class="sub" id="runSt" role="status"></span><button class="mini" id="runBtn" type="button">Conectar Strava</button></div>
@@ -281,7 +284,7 @@ const DATA={
 // ==============================================================================
 const $=id=>document.getElementById(id),fmt=(n,d=0)=>n.toLocaleString("es-ES",{useGrouping:"always",minimumFractionDigits:d,maximumFractionDigits:d});
 const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),h=now.getHours(),y=now.getFullYear(),m=now.getMonth();
-const bars=(v,l,c)=>{const mx=Math.max(...v,1);return v.map((x,i)=>`<div class="${i===c?"now":""}" style="--i:${i}"><span style="height:${x/mx*80}%"></span>${l?l[i]:""}</div>`).join("")};
+const bars=(v,l,c,ln,u)=>{const mx=Math.max(...v,1);return v.map((x,i)=>`<div class="${i===c?"now":""}" style="--i:${i}" ${ln||l?`tabindex="0" data-t="${ln?ln[i]:l[i]}: ${fmt(x,1)} ${u||"km"}"`:""}><span style="height:${x/mx*80}%"></span>${l?l[i]:""}</div>`).join("")};
 const pb=(id,p,l)=>{const i=$(id),b=i.parentElement;i.style.width=p+"%";if(!b.hasAttribute("role")){b.setAttribute("role","progressbar");b.setAttribute("aria-valuemin","0");b.setAttribute("aria-valuemax","100");b.setAttribute("aria-label",l)}b.setAttribute("aria-valuenow",Math.round(p))};
 const img=(id,l)=>{const e=$(id);e.setAttribute("role","img");e.setAttribute("aria-label",l)};
 
@@ -310,16 +313,16 @@ let saved="light";try{saved=localStorage.getItem("theme")||"light"}catch(e){}
 setTheme(saved);$("themeBtn").onclick=()=>setTheme(root.dataset.theme==="dark"?"light":"dark",true);
 
 // Running (datos de Strava vía función de Netlify; si no hay conexión se usan los de ejemplo)
+const MESL=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const MES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 const DEMO={"ok":true,"updated":"2026-10-16T08:00:00.000Z","months":[91,68.9,111.3,145.5,118.6,130.9,90.9,119.5,56,90.2,0,0],"monthsPrev":[106.7,109.7,126.5,85.4,60.4,140.6,74.9,134.6,105.2,77.7,87.2,74.3],"monthKm":90.2,"year":1022.7,"acts":9,"yearActs":106,"vsPrev":147,"pace":{"month":325,"year":329},"time":{"month":29321,"year":336002},"elev":{"month":660,"year":7487},"hr":{"month":148,"year":148},"paceMonths":[330,330,332,330,327,330,327,328,321,325,null,null],"km84":272,"weekdays":[190.3,46.1,226.5,12.3,131.6,324.2,91.7],"days":{"2025-10-12":10.5,"2025-10-13":7.3,"2025-10-20":7.1,"2025-10-25":14,"2025-10-27":8.2,"2025-11-05":5.2,"2025-11-07":5,"2025-11-13":7.2,"2025-11-17":10.1,"2025-11-19":6.3,"2025-11-22":21,"2025-11-23":6.7,"2025-11-24":10.5,"2025-11-26":8.7,"2025-11-30":6.6,"2025-12-01":7.4,"2025-12-03":5.3,"2025-12-04":8.7,"2025-12-08":5.8,"2025-12-10":9.5,"2025-12-22":8.8,"2025-12-24":7.2,"2025-12-28":9,"2025-12-29":5.1,"2025-12-31":7.5,"2026-01-02":10.7,"2026-01-04":5.2,"2026-01-11":8.1,"2026-01-12":5.1,"2026-01-14":9.1,"2026-01-20":8.2,"2026-01-21":8.2,"2026-01-23":5.3,"2026-01-24":7.4,"2026-01-28":9.4,"2026-01-31":14.3,"2026-02-02":9.8,"2026-02-04":6.9,"2026-02-08":6.4,"2026-02-11":5.7,"2026-02-13":10.4,"2026-02-15":7.6,"2026-02-16":7.8,"2026-02-18":7.6,"2026-02-25":6.5,"2026-03-02":10,"2026-03-08":8.5,"2026-03-09":9.5,"2026-03-11":5.8,"2026-03-14":19.1,"2026-03-21":21.4,"2026-03-22":9.8,"2026-03-24":10.4,"2026-03-27":8,"2026-03-30":8.9,"2026-04-01":9.9,"2026-04-03":9.2,"2026-04-04":7.6,"2026-04-06":9.2,"2026-04-10":7.2,"2026-04-11":18.6,"2026-04-13":8.6,"2026-04-15":9.5,"2026-04-17":10.5,"2026-04-20":10.3,"2026-04-22":7.1,"2026-04-25":18.5,"2026-04-27":9.8,"2026-04-29":9.6,"2026-05-01":5.7,"2026-05-09":10.8,"2026-05-11":8.9,"2026-05-12":7.3,"2026-05-13":9.7,"2026-05-15":6.4,"2026-05-17":6.6,"2026-05-18":8.4,"2026-05-20":5.9,"2026-05-22":6.3,"2026-05-23":19.6,"2026-05-24":7,"2026-05-26":5.7,"2026-05-27":10.3,"2026-06-03":6.8,"2026-06-05":9.4,"2026-06-06":21.2,"2026-06-07":6.5,"2026-06-08":8.3,"2026-06-09":8.7,"2026-06-10":9.1,"2026-06-13":19.7,"2026-06-15":10.8,"2026-06-17":8.8,"2026-06-20":7.9,"2026-06-22":6.7,"2026-06-24":7,"2026-07-01":10.1,"2026-07-03":8,"2026-07-04":20.6,"2026-07-06":10.5,"2026-07-13":8.9,"2026-07-18":16.5,"2026-07-24":9.9,"2026-07-30":6.3,"2026-08-08":10.9,"2026-08-12":8.9,"2026-08-15":19.5,"2026-08-19":5.4,"2026-08-21":8.3,"2026-08-22":19,"2026-08-23":8.2,"2026-08-24":8.6,"2026-08-26":9.3,"2026-08-29":21.3,"2026-09-01":5.9,"2026-09-06":7.6,"2026-09-09":8.8,"2026-09-11":7,"2026-09-16":7.3,"2026-09-21":5.7,"2026-09-23":8.6,"2026-09-28":5.2,"2026-10-01":6,"2026-10-02":9.5,"2026-10-03":16.3,"2026-10-04":10,"2026-10-05":10.6,"2026-10-07":6.6,"2026-10-10":14.1,"2026-10-12":8.6,"2026-10-14":8.5},"streak":{"days":0,"weeks":43,"bestWeekKm":48.1,"bestWeekStart":"2025-08-25","runDays":106},"last":{"id":235,"name":"Carrera de mañana","date":"2026-10-14","time":"07:40","km":8.5,"sec":2678,"pace":315,"hr":147,"elev":81,"poly":"_z`sFrbEuHoCaHuAyFUiEt@sCdCeBrEcA~Gs@bJy@xKmAbMqB|MsCdNuD`NgEnMeErLkDnKwBjJs@dI\\fHrBjG`ExFbGnFlHlF`IlF~HrFjHvFjGtFhFjFlExE~DzD~DnClEtAhFTjGu@jHeC~HsE`I_HlHcJbGyK`EcMrB}M\\eNs@aNwBoMkDsLeEoKgEkJuDeIsCgHqBkGmAyFy@oFs@mFcAmFeBsFsCwFiEuFyFkFaHyEuH{D"},"gear":[{"id":"g2","name":"Nike Pegasus 41","km":412.6,"kmRuns":412.6,"retired":false,"last":"2026-10-16"},{"id":"g1","name":"Hoka Clifton 9","km":688.2,"kmRuns":688.2,"retired":false,"last":"2026-03-30"}],"gearErr":false,"prs":{"items":{"1k":{"t":306,"id":185,"d":"2026-05-24"},"5k":{"t":1529,"id":178,"d":"2026-05-13"},"10k":{"t":3100,"id":113,"d":"2025-11-17"},"Half-Marathon":{"t":6911,"id":155,"d":"2026-03-21"}},"scanned":188,"total":235,"pending":47},"total":4582,"totalActs":640};
 let S=DEMO,r={...DATA.run,months:DEMO.months,year:DEMO.year,total:DEMO.total,acts:DEMO.acts,vsPrev:DEMO.vsPrev},live=false,afterRun=()=>{};
 function paintRun(){
   const cur=r.months[m];
-  $("runMonth").textContent=fmt(cur,1);$("runGoal").textContent=r.goalMonth;
+  $("runMonth").textContent=fmt(cur,1);
   const up=$("runUp");if(r.vsPrev==null){up.textContent="";up.removeAttribute("title")}else{up.textContent=(r.vsPrev>0?"+":"")+r.vsPrev+"%";up.title="Frente al mismo periodo del mes anterior";up.classList.toggle("dn",r.vsPrev<0)}
-  pb("runBar",Math.min(100,cur/r.goalMonth*100),"Progreso del objetivo mensual de running");
   $("runYear").textContent=fmt(r.year)+" km";$("runTotal").textContent=fmt(r.total)+" km";$("runActs").textContent=r.acts;
-  $("runChart").innerHTML=bars(r.months,MES,m);
+  $("runChart").innerHTML=bars(r.months,MES,m,MESL);
   const best=r.months.indexOf(Math.max(...r.months.slice(0,m+1)));
   img("runChart",`Kilómetros por mes ${y}: `+r.months.slice(0,m+1).map((v,i)=>`${MES[i]} ${fmt(v,1)}`).join(", ")+`. Mejor mes: ${MES[best]}, ${fmt(r.months[best],1)} km.`);
 }
@@ -440,7 +443,6 @@ const dur=s=>{let h=Math.floor(s/3600),mi=Math.round(s%3600/60);if(mi===60){h++;
 const clk=s=>{const t=Math.round(s),h=Math.floor(t/3600),mi=Math.floor(t%3600/60),se=t%60;return h?`${h}:${String(mi).padStart(2,"0")}:${String(se).padStart(2,"0")}`:`${mi}:${String(se).padStart(2,"0")}`};
 const dshort=s=>s?new Date(s+"T00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short",year:"numeric"}):"";
 const xe=t=>String(t).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
-const MESL=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 function dec(s){let i=0,la=0,lo=0;const o=[];while(i<s.length){let b,sh=0,v=0;do{b=s.charCodeAt(i++)-63;v|=(b&31)<<sh;sh+=5}while(b>=32&&i<=s.length);la+=v&1?~(v>>1):v>>1;sh=0;v=0;do{b=s.charCodeAt(i++)-63;v|=(b&31)<<sh;sh+=5}while(b>=32&&i<=s.length);lo+=v&1?~(v>>1):v>>1;o.push([la/1e5,lo/1e5])}return o}
 const GEAR_LIFE=700,GOAL_YEAR=1200;
 const cw=id=>Math.max(260,Math.round(($(id).clientWidth||340)-32));
@@ -461,10 +463,10 @@ function anPace(d){
       <div class="sub">Más arriba, más rápido.</div>`;
   }
   $("anPace").innerHTML=`<h2>Ritmo y tiempo</h2>
-    <div class="big2">${pc(d.pace.month)} <small>/km este mes</small></div>
-    <div class="sub">${d.pace.year?`Este año ${pc(d.pace.year)} /km de media`:""}</div>
-    <div class="row3"><div><b>${d.time.month?dur(d.time.month):"–"}</b><span class="sub">Tiempo del mes</span></div><div><b>${d.elev.month?"+"+fmt(d.elev.month)+" m":"–"}</b><span class="sub">Desnivel del mes</span></div><div><b>${d.hr.month?d.hr.month+" ppm":"–"}</b><span class="sub">FC media</span></div></div>
-    ${svg}<div class="sub" style="margin-top:6px">Este año: ${dur(d.time.year)} corriendo, +${fmt(d.elev.year)} m</div>`;
+    <div class="big2">${d.time.month?dur(d.time.month):"–"} <small>este mes</small></div>
+    <div class="sub">${d.time.year?`Este año ${dur(d.time.year)} corriendo${d.pace.year?` · ritmo medio ${pc(d.pace.year)} /km`:""}`:""}</div>
+    <div class="row3"><div><b>${d.pace.month?pc(d.pace.month)+" /km":"–"}</b><span class="sub">Ritmo del mes</span></div><div><b>${d.elev.month?"+"+fmt(d.elev.month)+" m":"–"}</b><span class="sub">Desnivel del mes</span></div><div><b>${d.hr.month?d.hr.month+" ppm":"–"}</b><span class="sub">FC media</span></div></div>
+    ${svg}<div class="sub" style="margin-top:6px">Este año: +${fmt(d.elev.year)} m de desnivel</div>`;
 }
 function anLast(d){
   const l=d.last;
@@ -509,7 +511,7 @@ function anCal(d){
       ${mlab}<text x="0" y="${18+0*CS+9}">Lun</text><text x="0" y="${18+2*CS+9}">Mié</text><text x="0" y="${18+4*CS+9}">Vie</text>${cells}</svg></div>
     <div class="lg"><span>Menos <span class="scale" aria-hidden="true"><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span> Más</span><span>Sin carrera · menos de 5 km · 5 a 10 km · 10 a 15 km · más de 15 km</span></div>
     <div class="sub" style="margin-top:16px">Kilómetros por día de la semana (${y})</div>
-    <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem;max-width:28rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)))}</div>`;
+    <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem;max-width:28rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)),["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"])}</div>`;
   const sc=$("anCal").querySelector(".scr");if(sc)sc.scrollLeft=sc.scrollWidth;
   const DN=["lunes","martes","miércoles","jueves","viernes","sábado","domingo"],mxi=d.weekdays.indexOf(Math.max(...d.weekdays));
   img("wdChart","Kilómetros por día de la semana este año: "+DN.map((n,i)=>`${n} ${fmt(d.weekdays[i])}`).join(", ")+`. El día más activo es ${DN[mxi]}.`);
@@ -519,6 +521,7 @@ function anStreak(d){
   const wk=Object.entries(d.days).filter(([k])=>k>=ws).reduce((a,[,v])=>a+v,0);
   $("anStreak").innerHTML=`<h2>Racha</h2>
     <div class="row3"><div><b class="big2">${s.weeks}</b><span class="sub">Semanas seguidas</span></div><div><b class="big2">${s.days}</b><span class="sub">Días seguidos</span></div></div>
+    <div class="sub">Cuenta cualquier actividad (carrera, caminata, pilates…).</div>
     <div class="kv"><span class="sub">Esta semana</span><b>${fmt(wk,1)} km</b></div>
     <div class="bar"><i id="wkBar"></i></div>
     <div class="kv"><span class="sub">Mejor semana</span><b>${fmt(s.bestWeekKm,1)} km${s.bestWeekStart?" · "+dshort(s.bestWeekStart):""}</b></div>
