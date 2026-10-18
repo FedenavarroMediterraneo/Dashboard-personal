@@ -42,6 +42,14 @@ await t('import: solo con el servidor vacío, filtra inválidos', async () => {
   assert.equal(r.body.imported, 0);
   const d = await loadData(s); assert.equal(d.entries.length, 1); assert.deepEqual(d.friends, ['A']);
 });
+await t('PlayStation a mano: guarda, sanea y no se pierde con otras acciones', async () => {
+  const s = mem();
+  assert.equal((await applyAction(s, { action: 'ps', ps: { level: 12, plat: 1, gold: 2, silver: 3, bronze: 4, last: 'Juego<b>' } })).status, 200);
+  await applyAction(s, { action: 'friends', list: ['A'] });
+  const d = await loadData(s);
+  assert.deepEqual(d.ps, { level: 12, plat: 1, gold: 2, silver: 3, bronze: 4, last: 'Juegob' });
+  assert.equal((await applyAction(s, { action: 'ps', ps: 'x' })).status, 400);
+});
 await t('acción desconocida o cuerpo vacío', async () => {
   const s = mem();
   assert.equal((await applyAction(s, { action: 'borrar-todo' })).status, 400);
@@ -49,6 +57,6 @@ await t('acción desconocida o cuerpo vacío', async () => {
 });
 await t('datos corruptos en el almacén no rompen', async () => {
   const s = mem(); await s.setJSON('data', { friends: 'x', entries: 5 });
-  assert.deepEqual(await loadData(s), { friends: null, entries: [] });
+  assert.deepEqual(await loadData(s), { friends: null, entries: [], ps: null });
 });
 if (n) { console.log(n + ' fallos'); process.exit(1); } else console.log('todo OK');

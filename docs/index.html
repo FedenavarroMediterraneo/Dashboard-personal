@@ -461,6 +461,12 @@ async function load(){
       if(!d.entries.length&&d.friends===null&&(loc.E.length||ls("amigos"))&&!ls("kmImportado")){
         await fcall({action:"import",entries:loc.E,friends:ls("amigos")});ls("kmImportado",true);d=await fcall();
       }
+      try{
+        const lp=psLoad();
+        if(d.ps){sset(PSK,JSON.stringify(d.ps))}
+        else if(lp){await fcall({action:"ps",ps:lp})}
+        paintPs();
+      }catch(x){}
       E=d.entries;A=d.friends||[...DATA.amigos];remote=true;lastSync=Date.now();
       msg("Sincronizado con la nube.");render();return;
     }catch(e){remote=false;msg(e.code==="key"?"La clave no es correcta. Los kilómetros se guardan solo en este navegador.":"Sin conexión con el servidor. Los kilómetros se guardan solo en este navegador.")}
@@ -630,7 +636,7 @@ function paintPs(){const m=psLoad();
   else{$("psL").textContent="–";$("ps1").textContent="–";$("ps2").textContent="–";$("psLast").textContent="–";gNotes()}}
 const psNum=(id,mx)=>{const v=Math.round(+$(id).value);return isFinite(v)&&v>=0&&v<=mx?v:0};
 $("psEd").onclick=()=>{const f=$("psF");f.hidden=!f.hidden;if(!f.hidden){const m=psLoad()||{};$("pfL").value=m.level||"";$("pfP").value=m.plat||"";$("pfG").value=m.gold||"";$("pfS").value=m.silver||"";$("pfB").value=m.bronze||"";$("pfT").value=m.last||"";$("pfL").focus()}};
-$("psF").onsubmit=ev=>{ev.preventDefault();sset(PSK,JSON.stringify({level:psNum("pfL",999),plat:psNum("pfP",9999),gold:psNum("pfG",9999),silver:psNum("pfS",9999),bronze:psNum("pfB",99999),last:$("pfT").value.trim().slice(0,60)}));$("psF").hidden=true;paintPs()};
+$("psF").onsubmit=async ev=>{ev.preventDefault();const v={level:psNum("pfL",999),plat:psNum("pfP",9999),gold:psNum("pfG",9999),silver:psNum("pfS",9999),bronze:psNum("pfB",99999),last:$("pfT").value.trim().slice(0,60)};sset(PSK,JSON.stringify(v));$("psF").hidden=true;paintPs();if(sget(SK)){try{await fcall({action:"ps",ps:v})}catch(x){msg("Guardado solo en este navegador: no se pudo sincronizar.")}}};
 const G_SEC={xbox:()=>$("gaming"),steam:()=>$("stH").closest("section"),ps:()=>$("psL").closest("section")};
 function gNotes(){for(const k in G_SEC){if(k==="ps"){const sec=G_SEC.ps();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive.ps?"":psLoad()?"Escritos a mano":"Pulsa Editar para poner tus trofeos";continue}const sec=G_SEC[k]();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive[k]?(gDiag[k]||""):"Datos de ejemplo"+(gErr[k]?" · "+(GE[gErr[k].split(" ")[0]]||gErr[k].split(" ")[0])+(gErr[k].includes(" ")?" "+gErr[k].split(" ")[1]:"")+(gDet[k]?" · "+gDet[k]:""):"")}}
 paintG0();

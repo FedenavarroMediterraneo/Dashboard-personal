@@ -23,9 +23,16 @@ export function validFriends(list) {
 }
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
+const num = (v, mx) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 && n <= mx ? n : 0; };
+export function validPs(p) {
+  if (!p || typeof p !== 'object') return null;
+  return { level: num(p.level, 999), plat: num(p.plat, 9999), gold: num(p.gold, 9999), silver: num(p.silver, 9999), bronze: num(p.bronze, 99999),
+    last: String(p.last ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 60) };
+}
+
 export async function loadData(store) {
   const d = await store.get('data', { type: 'json' }).catch(() => null);
-  return { friends: Array.isArray(d?.friends) ? d.friends : null, entries: Array.isArray(d?.entries) ? d.entries : [] };
+  return { friends: Array.isArray(d?.friends) ? d.friends : null, entries: Array.isArray(d?.entries) ? d.entries : [], ps: d?.ps && typeof d.ps === 'object' ? d.ps : null };
 }
 
 // Devuelve { status, body }
@@ -52,6 +59,13 @@ export async function applyAction(store, body) {
       const f = validFriends(body.list);
       if (!f) return bad('invalid');
       data.friends = f;
+      await store.setJSON('data', data);
+      return { status: 200, body: { ok: true } };
+    }
+    case 'ps': {
+      const p = validPs(body.ps);
+      if (!p) return bad('invalid');
+      data.ps = p;
       await store.setJSON('data', data);
       return { status: 200, body: { ok: true } };
     }
