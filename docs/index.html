@@ -79,6 +79,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 .cal .t{outline:2px solid var(--ink);outline-offset:2px}
 .leg{display:flex;gap:10px;font-size:0.6875rem;color:var(--mute);margin-top:10px;flex-wrap:wrap}
 .leg i{display:inline-block;width:.8rem;height:.8rem;border-radius:3px;margin-right:4px;border:2px solid transparent;vertical-align:-1px}
+.leg .lv{background:var(--acc)}.leg .lo{background:var(--h2);border-color:var(--acc)}.cal .v{background:var(--acc);color:#fff}.cal .o{background:var(--h2);color:var(--ink);border-color:var(--acc)}
 .leg .lw{background:var(--okF)}.leg .lf{background:var(--badF);border-radius:999px}.leg .lp{background:var(--fut)}
 .form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
 .form label{min-width:0;font-size:0.75rem;color:var(--mute);display:flex;flex-direction:column;gap:3px}
@@ -250,7 +251,8 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
   </section>
   <section class="card c4" id="trabajo"><h2>Trabajo</h2>
     <div class="sub" id="calTitle" style="margin-bottom:8px"></div><div class="cal" id="cal" role="list" aria-label="Calendario de trabajo del mes"></div>
-    <div class="leg"><span><i class="lw"></i>Trabajado</span><span><i class="lf"></i>No trabajo</span><span><i class="lp"></i>Por venir</span></div>
+    <div class="sub" id="calInfo" role="status" style="margin-top:8px"></div>
+    <div class="leg"><span><i class="lw"></i>Trabajo</span><span><i class="lf"></i>Libranza</span><span><i class="lv"></i>Vacaciones</span><span><i class="lo"></i>Permiso o baja</span><span><i class="lp"></i>Sin turno</span></div>
   </section>
 
   <section class="card c4" id="vida"><h2>Jubilación</h2>
@@ -580,14 +582,51 @@ img("stChart","Actividad reciente en Steam (horas): "+DATA.steam.bars.join(", ")
 const p=DATA.ps;$("psL").textContent=p.level;$("ps1").textContent=p.plat+" · "+p.gold;$("ps2").textContent=fmt(p.silver)+" · "+fmt(p.bronze);$("psLast").textContent=p.last;
 $("nsCode").textContent=DATA.nintendo.code;$("nsCopy").onclick=async()=>{const b=$("nsCopy");try{await navigator.clipboard.writeText(DATA.nintendo.code);b.textContent="Copiado"}catch(e){b.textContent="No se pudo copiar"}setTimeout(()=>b.textContent="Copiar código",1500)};
 
-// Calendario de trabajo (ciclo de ejemplo)
-const T=DATA.turnos,cyc=T.cycleWork+T.cycleOff,st=new Date(T.start+"T00:00");
-const dim=new Date(y,m+1,0).getDate(),first=(new Date(y,m,1).getDay()+6)%7;
-let cal="LMXJVSD".split("").map(d=>`<div class="h" aria-hidden="true">${d}</div>`).join("")+'<div aria-hidden="true"></div>'.repeat(first);
-for(let d=1;d<=dim;d++){const dt=new Date(y,m,d),k=Math.round((dt-st)/864e5),work=((k%cyc)+cyc)%cyc<T.cycleWork;
-const c=dt>today?"p":work?"w":"f",isT=dt.getTime()===today.getTime();
-cal+=`<div class="d ${c}${isT?" t":""}" role="listitem" aria-label="${d}, ${c==="p"?"por venir":c==="w"?"trabajado":"no trabajo"}${isT?", hoy":""}">${d}</div>`}
-$("cal").innerHTML=cal;$("calTitle").textContent=now.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+// Calendario de trabajo: lee tus turnos de la app Turnos (Firestore, documento turnos/data, el mismo que su modo ?view=1).
+// Solo se guardan tus turnos; los de los demás se descartan al leerlos. Si no responde, se enseña un ciclo de ejemplo.
+const TURNOS={project:"turnos-web-mediterraneo",key:"AIzaSyDHC981ppY60vOx5fimVAk-0L8XzTnUun8",person:"Fede",cache:"turnosCache"};
+const WORK=["Mañana","Jornada partida","Mediodía","Tarde"],SICON={"Mañana":"☀️","Jornada partida":"🕐","Mediodía":"🍽️","Tarde":"🌙"};
+let shifts=null,calNote="Ejemplo: aún no se han leído tus turnos.";
+const dkey=(yy,mm,dd)=>yy+"-"+String(mm+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
+const kindOf=t=>!t?"p":WORK.includes(t)?"w":t==="Libranza"?"f":t==="Vacaciones"?"v":"o";
+const pickT=l=>l.find(x=>!WORK.includes(x)&&x!=="Libranza")||l.find(x=>WORK.includes(x))||l[0];
+const KIND_TXT={w:"trabajo",f:"libranza",v:"vacaciones",o:"permiso o baja",p:"sin turno"};
+function paintWork(){
+  const T=DATA.turnos,cyc=T.cycleWork+T.cycleOff,st=new Date(T.start+"T00:00");
+  const dim=new Date(y,m+1,0).getDate(),first=(new Date(y,m,1).getDay()+6)%7;
+  let cal="LMXJVSD".split("").map(d=>`<div class="h" aria-hidden="true">${d}</div>`).join("")+'<div aria-hidden="true"></div>'.repeat(first);
+  for(let d=1;d<=dim;d++){
+    const dt=new Date(y,m,d),isT=dt.getTime()===today.getTime();let k,tx;
+    if(shifts){const l=shifts[dkey(y,m,d)]||[],t=pickT(l);k=kindOf(t);tx=t?(SICON[t]?SICON[t]+" ":"")+t:KIND_TXT.p}
+    else{const work=(((Math.round((dt-st)/864e5))%cyc)+cyc)%cyc<T.cycleWork;k=dt>today?"p":work?"w":"f";tx=KIND_TXT[k]}
+    cal+=`<div class="d ${k}${isT?" t":""}" role="listitem" title="${tx}" aria-label="${d}, ${tx}${isT?", hoy":""}">${d}</div>`;
+  }
+  $("cal").innerHTML=cal;$("calTitle").textContent=now.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+  let info=calNote;
+  if(shifts){
+    const g=dt=>{const l=shifts[dkey(dt.getFullYear(),dt.getMonth(),dt.getDate())]||[];const t=pickT(l);return t?(SICON[t]?SICON[t]+" ":"")+t:"sin turno"};
+    const tm=new Date(y,m,now.getDate()+1),cnt=t=>Object.entries(shifts).filter(([k,v])=>k.startsWith(y+"-")&&v.includes(t)).length;
+    info=`Hoy: ${g(today)} · Mañana: ${g(tm)}<br>Vacaciones ${cnt("Vacaciones")} de 23 · Asuntos propios ${cnt("Asuntos propios")} de 4 · ${calNote}`;
+  }
+  $("calInfo").innerHTML=info;
+}
+paintWork();
+async function loadTurnos(){
+  try{const c=JSON.parse(sget(TURNOS.cache)||"null");if(c&&c.s){shifts=c.s;calNote="Guardado "+ago(c.at);paintWork()}}catch(e){}
+  try{
+    const res=await fetch(`https://firestore.googleapis.com/v1/projects/${TURNOS.project}/databases/(default)/documents/turnos/data?key=${TURNOS.key}`);
+    if(!res.ok)throw new Error(res.status);
+    const j=await res.json(),vals=(j.fields&&j.fields.events&&j.fields.events.arrayValue&&j.fields.events.arrayValue.values)||[],tmp={};
+    for(const v of vals){
+      const f=v.mapValue&&v.mapValue.fields;if(!f||!f.person||f.person.stringValue!==TURNOS.person)continue;
+      const d=f.date&&f.date.stringValue,t=f.type&&f.type.stringValue;if(!/^\d{4}-\d{2}-\d{2}$/.test(d||"")||!t)continue;
+      const o=f.order?+(f.order.integerValue||f.order.doubleValue||0):0;(tmp[d]=tmp[d]||[]).push({t,o});
+    }
+    const out={};for(const d in tmp)out[d]=tmp[d].sort((a,b)=>a.o-b.o).map(x=>x.t);
+    shifts=out;calNote="Actualizado ahora";sset(TURNOS.cache,JSON.stringify({s:out,at:new Date().toISOString()}));paintWork();
+  }catch(e){if(!shifts){calNote="Ejemplo: no se han podido leer tus turnos.";paintWork()}else{calNote="Sin conexión con Turnos, datos de "+(calNote.replace("Guardado ","")||"antes");paintWork()}}
+}
+loadTurnos();
 
 // Jubilación y cotización
 const jd=new Date(DATA.jubilacion+"T00:00");let yy=jd.getFullYear()-y,mm=jd.getMonth()-m,dd=jd.getDate()-now.getDate();
