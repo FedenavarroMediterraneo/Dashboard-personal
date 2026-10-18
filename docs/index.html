@@ -78,6 +78,10 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 .cal .p{background:var(--fut);color:var(--futT)}
 .cal .t{outline:2px solid var(--ink);outline-offset:2px}
 #calInfo:not(:empty){margin-top:8px}
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calnav button{font:inherit;color:var(--ink);background:transparent;border:0;border-radius:8px;cursor:pointer;min-width:2.25rem;min-height:2.25rem;font-size:1.25rem;line-height:1}
+.calnav button:hover{background:var(--soft)}
+.calnav .ttl{font-size:.875rem;color:var(--mute);padding:0 10px}
 .leg{display:flex;gap:10px;font-size:0.6875rem;color:var(--mute);margin-top:10px;flex-wrap:wrap}
 .leg i{display:inline-block;width:.8rem;height:.8rem;border-radius:3px;margin-right:4px;border:2px solid transparent;vertical-align:-1px}
 .leg .lw{background:var(--okF)}.leg .lf{background:var(--badF)}.leg .lp{background:var(--fut)}
@@ -250,7 +254,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     <button class="btn" id="nsCopy">Copiar código</button>
   </section>
   <section class="card c4" id="trabajo"><h2>Trabajo</h2>
-    <div class="sub" id="calTitle" style="margin-bottom:8px"></div><div class="cal" id="cal" role="list" aria-label="Calendario de trabajo del mes"></div>
+    <div class="calnav"><button type="button" id="calPrev" aria-label="Mes anterior">‹</button><button type="button" class="ttl" id="calTitle" aria-label="Volver al mes actual"></button><button type="button" id="calNext" aria-label="Mes siguiente">›</button></div><div class="cal" id="cal" role="list" aria-label="Calendario de trabajo del mes"></div>
     <div class="sub" id="calInfo" role="status"></div>
     <div class="leg"><span><i class="lw"></i>Trabajado</span><span><i class="lf"></i>No trabajado</span></div>
   </section>
@@ -592,20 +596,24 @@ const dkey=(yy,mm,dd)=>yy+"-"+String(mm+1).padStart(2,"0")+"-"+String(dd).padSta
 // Sin ningún turno con tu nombre ese día (fines de semana, festivos...) = no trabajado.
 const kindOf=l=>l&&l.some(x=>WORK.includes(x))?"w":"f";
 const KIND_TXT={w:"trabajado",f:"no trabajado",p:"por venir"};
+let vy=y,vm=m;
 function paintWork(){
   const T=DATA.turnos,cyc=T.cycleWork+T.cycleOff,st=new Date(T.start+"T00:00");
-  const dim=new Date(y,m+1,0).getDate(),first=(new Date(y,m,1).getDay()+6)%7;
+  const dim=new Date(vy,vm+1,0).getDate(),first=(new Date(vy,vm,1).getDay()+6)%7;
   let cal="LMXJVSD".split("").map(d=>`<div class="h" aria-hidden="true">${d}</div>`).join("")+'<div aria-hidden="true"></div>'.repeat(first);
   for(let d=1;d<=dim;d++){
-    const dt=new Date(y,m,d),isT=dt.getTime()===today.getTime();let k,tx;
-    if(shifts){k=kindOf(shifts[dkey(y,m,d)]);tx=KIND_TXT[k]}
+    const dt=new Date(vy,vm,d),isT=dt.getTime()===today.getTime();let k,tx;
+    if(shifts){k=kindOf(shifts[dkey(vy,vm,d)]);tx=KIND_TXT[k]}
     else{const work=(((Math.round((dt-st)/864e5))%cyc)+cyc)%cyc<T.cycleWork;k=dt>today?"p":work?"w":"f";tx=KIND_TXT[k]}
     cal+=`<div class="d ${k}${isT?" t":""}" role="listitem" title="${tx}" aria-label="${d}, ${tx}${isT?", hoy":""}">${d}</div>`;
   }
-  $("cal").innerHTML=cal;$("calTitle").textContent=now.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+  $("cal").innerHTML=cal;$("calTitle").textContent=new Date(vy,vm,1).toLocaleDateString("es-ES",{month:"long",year:"numeric"});
   $("calInfo").textContent=shifts&&/^Actualizado/.test(calNote)?"":calNote;
 }
 paintWork();
+$("calPrev").onclick=()=>{vm--;if(vm<0){vm=11;vy--}paintWork()};
+$("calNext").onclick=()=>{vm++;if(vm>11){vm=0;vy++}paintWork()};
+$("calTitle").onclick=()=>{vy=y;vm=m;paintWork()};
 async function loadTurnos(){
   try{const c=JSON.parse(sget(TURNOS.cache)||"null");if(c&&c.s){shifts=c.s;calNote="Guardado "+ago(c.at);paintWork()}}catch(e){}
   try{
