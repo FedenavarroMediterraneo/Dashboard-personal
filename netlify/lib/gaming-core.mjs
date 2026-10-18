@@ -59,7 +59,7 @@ function findProfile(root) {
 export async function getXbox({ env, fetchImpl = fetch }) {
   if (!env.XBL_API_KEY) throw new GamingError('config');
   const h = { 'X-Authorization': env.XBL_API_KEY, accept: 'application/json', 'accept-language': 'es-ES' };
-  const acc = await getJson('https://xbl.io/api/v2/account', fetchImpl, h);
+  const acc = await getJson('https://api.xbl.io/v2/account', fetchImpl, h);
   const { tag, score: sc } = findProfile(acc);
   if (!tag) {
     const keys = acc && typeof acc === 'object' ? Object.keys(acc).slice(0, 8).join(', ') : typeof acc;
@@ -68,7 +68,7 @@ export async function getXbox({ env, fetchImpl = fetch }) {
   const score = sc || 0;
   let ach = null, last = null;
   try {
-    const a = await getJson('https://xbl.io/api/v2/achievements', fetchImpl, h);
+    const a = await getJson('https://api.xbl.io/v2/achievements', fetchImpl, h);
     const titles = Array.isArray(a?.titles) ? a.titles : [];
     ach = titles.reduce((s, t) => s + (+t?.achievement?.currentAchievements || 0), 0);
     const withDate = titles.filter(t => t?.lastUnlock && !String(t.lastUnlock).startsWith('0001')).sort((x, y) => String(y.lastUnlock).localeCompare(String(x.lastUnlock)));
