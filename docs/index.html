@@ -24,9 +24,9 @@ aside a:first-child,aside a:hover{background:var(--card);color:var(--ink);box-sh
 aside a:focus-visible,.pill:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .q{font-size:0.75rem;color:var(--mute);font-style:italic}
 main{flex:1;min-width:0;padding:16px 14px 40px;container-type:inline-size}
-.hero{background:linear-gradient(120deg,var(--h1),var(--h2));border-radius:20px;padding:24px 26px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.hero{background:linear-gradient(120deg,var(--h1),var(--h2));border-radius:20px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 .hi{color:var(--mute);font-size:0.875rem}
-h1{font-size:2.125rem;letter-spacing:-.02em;line-height:1.1}
+h1{font-size:1.625rem;letter-spacing:-.02em;line-height:1.1}
 .mid{text-align:center;font-size:0.8125rem;color:var(--mute)}
 .mid b{display:block;color:var(--ink);font-size:0.875rem;font-weight:600}
 .wx{display:flex;align-items:center;gap:8px;font-size:0.8125rem;color:var(--mute)}
@@ -229,9 +229,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 </aside>
 <main id="top">
 <div class="hero">
-  <div><div class="hi" id="greet"></div><h1 id="name"></h1><div class="hi">“Disciplina hoy, resultados mañana.”</div></div>
-  <div class="clk"><b id="clock"></b><span id="today"></span><span id="place"></span></div>
-  <div class="wx"><span id="wxIcon"></span><div><b id="wxT"></b><span id="wxTxt"></span></div></div>
+  <h1 id="name">Dashboard de Fede</h1>
   <div class="right"><a class="link" href="https://dashboar-castellon.netlify.app/" target="_blank" rel="noopener">Dashboard Castellón</a><button class="pill" id="themeBtn" aria-label="Cambiar entre modo claro y oscuro"><span>Claro</span><span>Oscuro</span></button></div>
 </div>
 
@@ -346,21 +344,6 @@ const pb=(id,p,l)=>{const i=$(id),b=i.parentElement;i.style.width=p+"%";if(!b.ha
 const img=(id,l)=>{const e=$(id);e.setAttribute("role","img");e.setAttribute("aria-label",l)};
 
 // Cabecera
-$("greet").textContent=(h<6?"Buenas noches":h<13?"Buenos días":h<21?"Buenas tardes":"Buenas noches")+",";
-$("name").textContent=DATA.name;
-$("today").textContent=now.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-$("place").textContent=DATA.city+", "+DATA.country;
-const W={
-sun:'<circle cx="20" cy="20" r="7" fill="#f5b301"/><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M31.3 8.7l-2.8 2.8M11.5 28.5l-2.8 2.8" stroke="#f5b301" stroke-width="2.5" stroke-linecap="round"/>',
-partly:'<circle cx="14" cy="14" r="6" fill="#f5b301"/><path transform="translate(6 6) scale(.85)" d="M12 30a7 7 0 010-14 9 9 0 0117 2 6 6 0 01-1 12z" fill="#9fb0cc"/>',
-cloud:'<path d="M12 30a7 7 0 010-14 9 9 0 0117 2 6 6 0 01-1 12z" fill="#9fb0cc"/>',
-rain:'<path transform="translate(0 -5)" d="M12 30a7 7 0 010-14 9 9 0 0117 2 6 6 0 01-1 12z" fill="#9fb0cc"/><path d="M14 31l-2 5M21 31l-2 5M28 31l-2 5" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>',
-wind:'<g fill="none" stroke="#7aa2d6" stroke-width="2.5" stroke-linecap="round"><path d="M6 14h20a4 4 0 10-4-4"/><path d="M6 22h26a4 4 0 11-4 4"/><path d="M6 30h12a3 3 0 11-3 3"/></g>',
-cold:'<path d="M20 5v30M7 12.5l26 15M7 27.5l26-15" stroke="#5eb6e8" stroke-width="2.5" stroke-linecap="round"/>'};
-function wxKind(c,t,w){if(w>=35)return["wind","Viento"];if(t<=5)return["cold","Frío"];if(c===0)return["sun","Soleado"];if(c<=2)return["partly","Parcialmente nublado"];if(c<=48)return["cloud",c>=45?"Niebla":"Nublado"];if(c<=67)return["rain","Lluvia"];if(c<=77)return["cold","Nieve"];if(c<=82)return["rain","Chubascos"];if(c<=86)return["cold","Nieve"];return["rain","Tormenta"]}
-function setWx(k,t,txt){$("wxIcon").innerHTML=`<svg viewBox="0 0 40 40" aria-hidden="true">${W[k]}</svg>`;$("wxT").textContent=Math.round(t)+"°C";$("wxTxt").textContent=txt}
-setWx(DATA.weather.kind,DATA.weather.t,DATA.weather.txt);
-fetch(`https://api.open-meteo.com/v1/forecast?latitude=${DATA.lat}&longitude=${DATA.lon}&current=temperature_2m,weather_code,wind_speed_10m`).then(x=>x.json()).then(j=>{const c=j.current,k=wxKind(c.weather_code,c.temperature_2m,c.wind_speed_10m);setWx(k[0],c.temperature_2m,k[1])}).catch(()=>{});
 
 // Tema: claro por defecto
 const root=document.documentElement;
@@ -755,7 +738,7 @@ function cd(n){
   const b100=new Date(bd.getFullYear()+100,mo0,d0),lp=Math.min(100,(n-bd)/(b100-bd)*100);
   lifeBatt(lp);
 }
-function tick(){const n=new Date();$("clock").textContent=n.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit",second:"2-digit"});cd(n)}
+function tick(){cd(new Date())}
 tick();setInterval(tick,1000);
 </script>
 </body>
