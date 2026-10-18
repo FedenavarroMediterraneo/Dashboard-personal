@@ -256,7 +256,9 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
   <section class="card c4" id="vida"><h2>Jubilación</h2>
     <div class="big" style="font-size:1.625rem" id="jubLeft"></div><div class="sub" id="jubDate"></div>
     <div class="bar"><i id="jubBar"></i></div>
-    <div class="row3"><div><b id="cotDays"></b><span class="sub">días cotizados</span></div><div><b id="cotGoal"></b><span class="sub">días objetivo</span></div><div><b id="cotPct"></b><span class="sub">completado</span></div></div>
+    <div class="row3"><div><b id="cotDays"></b><span class="sub">días cotizados hoy</span></div><div><b id="cot65"></b><span class="sub">al cumplir 65</span></div><div><b id="cot40"></b><span class="sub">llegas a 40 años cotizados</span></div></div>
+    <div class="sub" id="cotYMD"></div>
+    <div class="sub" id="cotNote" style="margin-top:6px"></div>
   </section>
   <section class="card c4 full"><h2>Cumpleaños</h2>
     <div class="bdl"><span class="ck" aria-hidden="true">🎂</span><div><div class="big"><small>Faltan</small> <span id="bdDays"></span> <small>días</small></div><div class="sub">para tu cumpleaños número <b id="bdAge"></b>, el <span id="bdDate"></span></div></div></div>
@@ -278,7 +280,8 @@ const DATA={
   steam:{hours:4287,two:13.2,bars:[3,5,2,6,4,8,7,5,9,6],top:"Factorio · 312 h"},
   ps:{level:412,plat:12,gold:102,silver:432,bronze:2981,last:"Maestro del destino · Final Fantasy XVI · hace 5 días"},
   nintendo:{code:"SW-0000-0000-0000"},
-  cot:{days:4912,goal:13140},jubilacion:"2058-05-14",nacimiento:"1976-02-26",
+  // Días cotizados según tu informe en la fecha "at". Desde ahí se suman los días que pasan (si cotizas sin interrupción). Actualízalo de vez en cuando con tu vida laboral.
+  cot:{days:10611,at:"2026-10-18",goal:14610,min65:14062},jubilacion:"2041-02-26",nacimiento:"1976-02-26",
   turnos:{cycleWork:5,cycleOff:2,start:"2026-01-01"}
 };
 // ==============================================================================
@@ -590,8 +593,15 @@ const jd=new Date(DATA.jubilacion+"T00:00");let yy=jd.getFullYear()-y,mm=jd.getM
 if(dd<0){mm--;dd+=new Date(y,m,0).getDate()}if(mm<0){yy--;mm+=12}
 $("jubLeft").textContent=`${yy} años, ${mm} meses y ${dd} días`;
 $("jubDate").textContent="Fecha estimada: "+jd.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
-const pct=DATA.cot.days/DATA.cot.goal*100;
-pb("jubBar",pct,"Días cotizados sobre el objetivo");$("cotDays").textContent=fmt(DATA.cot.days);$("cotGoal").textContent=fmt(DATA.cot.goal);$("cotPct").textContent=Math.round(pct)+"%";
+const C=DATA.cot,ref=new Date(C.at+"T00:00"),t0=new Date(y,m,now.getDate()),DAY=864e5;
+const cotNow=C.days+Math.max(0,Math.round((t0-ref)/DAY)),cot65=C.days+Math.round((jd-ref)/DAY);
+const ymd=n=>{const yr=Math.floor(n/365.25),r=n-yr*365.25,mo=Math.floor(r/30.4375),d=Math.round(r-mo*30.4375);return`${yr} años, ${mo} meses y ${d} días`};
+const when=n=>new Date(ref.getTime()+(n-C.days)*DAY).toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+const pct=cotNow/C.goal*100;
+pb("jubBar",pct,"Días cotizados sobre 40 años");$("cotDays").textContent=fmt(cotNow);$("cot65").textContent=Math.floor(cot65/365.25)+" años";
+$("cot40").textContent=cotNow>=C.goal?"Ya":when(C.goal);
+$("cotYMD").textContent=`Hoy llevas ${ymd(cotNow)}. A los 65 serían unos ${ymd(cot65)} (${fmt(cot65)} días).`;
+$("cotNote").textContent=`La ley actual pide 38 años y 6 meses para jubilarte a los 65 (${cotNow>=C.min65?"ya lo cumples":"lo alcanzas en "+when(C.min65)}). Estimación sin interrupciones; puede cambiar.`;
 
 // Reloj y cumpleaños: cuenta atrás en vivo
 const LIFE_CELLS=10;
