@@ -130,6 +130,11 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 .psx .btn{flex:1;background:#fff;color:#00439c;text-align:center;text-decoration:none;display:block}
 .psx .btn:focus-visible,.psx .mini:focus-visible{outline-color:#fff}
 .psx .mini{color:#fff;border-color:rgba(255,255,255,.6)}
+.trs{display:grid;grid-template-columns:1fr 1fr;gap:10px 8px;padding:12px 0 6px;border-bottom:1px solid rgba(255,255,255,.3)}
+.trs span{display:flex;align-items:center;gap:8px;font-size:1.125rem}
+.trs svg{width:28px;height:28px;flex:none;stroke-width:0}
+.tp{fill:#9fd8ff;filter:drop-shadow(0 0 4px #5ab4ff)}.tg{fill:#ffc83d}.ts{fill:#d3d8de}.tb{fill:#e0976a}
+.psx #psT{font-size:inherit}
 .psf[hidden]{display:none}
 .psf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .psf label{font-size:.75rem;display:flex;flex-direction:column;gap:3px}
@@ -272,9 +277,15 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     <div class="kv"><span class="sub">Más jugado</span><b id="stM"></b></div>
   </section>
   <section class="card c3 psx" id="psCard"><h2>PlayStation</h2>
-    <div class="big"><small>Nivel</small> <span id="psL"></span></div>
-    <div class="kv"><span class="sub">Platino · Oro</span><b id="ps1"></b></div>
-    <div class="kv"><span class="sub">Plata · Bronce</span><b id="ps2"></b></div>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="cup" viewBox="0 0 24 24"><path d="M6 3h12v5a6 6 0 0 1-12 0V3z M6 4H2.5v2.2C2.5 8.4 4 10 6.4 10.3 M18 4h3.5v2.2c0 2.2-1.5 3.8-3.9 4.1 M10.8 14h2.4v3.2h3V20H7.8v-2.8h3z"/></symbol></defs></svg>
+    <div class="big"><span id="psT"></span></div><div class="sub">trofeos en total</div>
+    <div class="kv"><span class="sub">Nivel</span><b id="psL"></b></div>
+    <div class="trs">
+      <span title="Platino"><svg class="tp"><use href="#cup"/></svg><b id="ps1"></b></span>
+      <span title="Oro"><svg class="tg"><use href="#cup"/></svg><b id="psG"></b></span>
+      <span title="Plata"><svg class="ts"><use href="#cup"/></svg><b id="ps2"></b></span>
+      <span title="Bronce"><svg class="tb"><use href="#cup"/></svg><b id="psB"></b></span>
+    </div>
     <div class="kv"><span class="sub">Último trofeo</span><b id="psLast"></b></div>
     <form class="psf" id="psF" hidden>
       <label>Nivel<input id="pfL" type="number" min="1" max="999"></label><label>Platino<input id="pfP" type="number" min="0" max="9999"></label>
@@ -628,17 +639,18 @@ function paintG(p,d,man){
   if(p==="xbox"){gDiag.xbox=d.diag?"Logros: "+d.diag:"";const av=$("xbAv");if(d.pic){av.style.backgroundImage=`url("${d.pic}")`;av.style.backgroundSize="cover";av.textContent=""}else{av.style.backgroundImage="";av.textContent=(d.tag||"X")[0].toUpperCase()}$("xbTag").textContent=d.tag;$("xbG").textContent=fmt(d.score);$("xbA").textContent=d.ach==null?"–":fmt(d.ach);$("xbL").textContent=d.last?gTxt(d.last.game,d.last.at):"–";}
   else if(p==="steam"){$("stH").textContent=fmt(d.hours)+" h";$("st2").textContent="+"+fmt(d.two,1)+" h";$("stM").textContent=d.top?`${d.top.name} · ${fmt(d.top.hours)} h`:"–";
     const b=d.bars&&d.bars.length?d.bars:[0];$("stChart").innerHTML=bars(b,null,b.length-1,d.names||null,"h");img("stChart","Horas por juego en las últimas 2 semanas: "+(d.names?d.names.map((n,i)=>n+" "+b[i]+" h").join(", "):"sin actividad"))}
-  else if(p==="ps"){$("psL").textContent=d.level;$("ps1").textContent=d.plat+" · "+d.gold;$("ps2").textContent=fmt(d.silver)+" · "+fmt(d.bronze);$("psLast").textContent=d.last?gTxt(d.last.game,d.last.at):"–"}
+  else if(p==="ps"){psFill(d);$("psLast").textContent=d.last?gTxt(d.last.game,d.last.at):"–"}
   else if(p==="nintendo"){nsCode=d.code;$("nsCode").textContent=d.code}
   if(!man)gLive[p]=true;gNotes();
 }
 let nsCode=DATA.nintendo.code;
 // PlayStation: trofeos escritos a mano (guardados en este navegador). Si algún día se activa NPSSO en Netlify, los datos automáticos pasan por delante.
 const PSK="psManual";
+function psFill(d){const n=v=>+v||0;$("psT").textContent=fmt(n(d.plat)+n(d.gold)+n(d.silver)+n(d.bronze));$("psL").textContent=d.level;$("ps1").textContent=fmt(d.plat);$("psG").textContent=fmt(d.gold);$("ps2").textContent=fmt(d.silver);$("psB").textContent=fmt(d.bronze)}
 function psLoad(){try{const m=JSON.parse(sget(PSK)||"null");return m&&typeof m==="object"?m:null}catch(e){return null}}
 function paintPs(){const m=psLoad();
   if(m)paintG("ps",{level:m.level,plat:m.plat,gold:m.gold,silver:m.silver,bronze:m.bronze,last:m.last?{game:m.last,at:null}:null},true);
-  else{$("psL").textContent="–";$("ps1").textContent="–";$("ps2").textContent="–";$("psLast").textContent="–";gNotes()}}
+  else{["psT","psL","ps1","psG","ps2","psB"].forEach(i=>$(i).textContent="–");$("psLast").textContent="–";gNotes()}}
 const psNum=(id,mx)=>{const v=Math.round(+$(id).value);return isFinite(v)&&v>=0&&v<=mx?v:0};
 $("psEd").onclick=()=>{const f=$("psF");f.hidden=!f.hidden;if(!f.hidden){const m=psLoad()||{};$("pfL").value=m.level||"";$("pfP").value=m.plat||"";$("pfG").value=m.gold||"";$("pfS").value=m.silver||"";$("pfB").value=m.bronze||"";$("pfT").value=m.last||"";$("pfL").focus()}};
 $("psF").onsubmit=async ev=>{ev.preventDefault();const v={level:psNum("pfL",999),plat:psNum("pfP",9999),gold:psNum("pfG",9999),silver:psNum("pfS",9999),bronze:psNum("pfB",99999),last:$("pfT").value.trim().slice(0,60)};sset(PSK,JSON.stringify(v));$("psF").hidden=true;paintPs();if(sget(SK)){try{await fcall({action:"ps",ps:v})}catch(x){msg("Guardado solo en este navegador: no se pudo sincronizar.")}}};
