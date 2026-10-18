@@ -610,7 +610,7 @@ async function loadGaming(){
   for(const p of GP)if(c[p])try{paintG(p,c[p])}catch(e){}
   await Promise.all(GP.map(async p=>{
     try{
-      const res=await fetch(API_BASE+"/.netlify/functions/gaming?p="+p,{headers:{"x-dash-key":key}});
+      const res=await fetch(API_BASE+"/.netlify/functions/gaming?p="+p+(/[?&]force=1/.test(location.search)?"&force=1":""),{headers:{"x-dash-key":key}});
       const d=await res.json();
       if(res.ok&&d&&d.ok&&d.data){delete gErr[p];paintG(p,d.data);c[p]=d.data;sset(GK,JSON.stringify(c))}else{gErr[p]=((d&&d.error)||"api")+(d&&d.status?" ("+d.status+")":"");gDet[p]=(d&&d.detail)||"";gNotes()}
     }catch(e){}
