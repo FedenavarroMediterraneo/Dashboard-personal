@@ -114,6 +114,22 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 .xbx .kv{border-color:rgba(255,255,255,.3)}
 .xbx h2{display:inline-block;background:#fff;color:#107c10;border-radius:999px;padding:5px 16px;margin-bottom:14px}
 .xbx .av{background:#fff;color:#107c10}
+.psx{background:#00439c;color:#fff;overflow:hidden}
+.psx::before,.psx::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.12)}
+.psx::before{width:120px;height:120px;right:-34px;bottom:-40px}.psx::after{width:46px;height:46px;right:70px;bottom:-14px}
+.psx>*{position:relative;z-index:1}
+.psx .sub,.psx small{color:#fff}
+.psx .kv{border-color:rgba(255,255,255,.3)}
+.psx h2{display:inline-block;background:#fff;color:#00439c;border-radius:999px;padding:5px 16px;margin-bottom:14px}
+.psb{display:flex;gap:8px;align-items:center;margin-top:12px}
+.psx .btn{flex:1;background:#fff;color:#00439c;text-align:center;text-decoration:none;display:block}
+.psx .btn:focus-visible,.psx .mini:focus-visible{outline-color:#fff}
+.psx .mini{color:#fff;border-color:rgba(255,255,255,.6)}
+.psf[hidden]{display:none}
+.psf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.psf label{font-size:.75rem;display:flex;flex-direction:column;gap:3px}
+.psf .w{grid-column:1/-1}
+.psf input{width:100%;padding:6px 8px;border-radius:8px;border:0;font:inherit;font-size:.875rem;color:#14213d;background:#fff}
 .nin{background:#e60012;color:#fff;overflow:hidden}
 .nin::before,.nin::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.14)}
 .nin::before{width:120px;height:120px;right:-34px;bottom:-40px}.nin::after{width:46px;height:46px;right:70px;bottom:-14px}
@@ -250,11 +266,18 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     <div class="chart" id="stChart" style="height:40px;--bc:var(--prog);--bn:var(--ink)"></div>
     <div class="kv"><span class="sub">Más jugado</span><b id="stM"></b></div>
   </section>
-  <section class="card c3"><h2>PlayStation</h2>
+  <section class="card c3 psx" id="psCard"><h2>PlayStation</h2>
     <div class="big"><small>Nivel</small> <span id="psL"></span></div>
     <div class="kv"><span class="sub">Platino · Oro</span><b id="ps1"></b></div>
     <div class="kv"><span class="sub">Plata · Bronce</span><b id="ps2"></b></div>
     <div class="kv"><span class="sub">Último trofeo</span><b id="psLast"></b></div>
+    <form class="psf" id="psF" hidden>
+      <label>Nivel<input id="pfL" type="number" min="1" max="999"></label><label>Platino<input id="pfP" type="number" min="0" max="9999"></label>
+      <label>Oro<input id="pfG" type="number" min="0" max="9999"></label><label>Plata<input id="pfS" type="number" min="0" max="9999"></label>
+      <label>Bronce<input id="pfB" type="number" min="0" max="99999"></label><label class="w">Último trofeo<input id="pfT" type="text" maxlength="60" placeholder="Trofeo · Juego"></label>
+      <div class="w"><button class="mini" type="submit">Guardar</button></div>
+    </form>
+    <div class="psb"><a class="btn" id="psAdd" href="https://profile.playstation.com/FedeNavarro" target="_blank" rel="noopener">Añadir amigo</a><button class="mini" id="psEd" type="button">Editar</button></div>
   </section>
   <section class="card c3 nin">
     <div class="nlogo" role="img" aria-label="Nintendo">Nintendo</div>
@@ -590,19 +613,28 @@ let lastW=0;try{new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.wid
 const GK="gamingCache",GP=["steam","xbox","ps","nintendo"],gLive={},gErr={},gDet={},gDiag={};
 const GE={config:"falta configurarlo en Netlify",private:"perfil privado o sin juegos visibles",auth:"clave rechazada",rate:"límite de peticiones",api:"el servicio no responde bien",network:"sin conexión con el servicio",format:"código con formato incorrecto",key:"clave del dashboard incorrecta"};
 const gTxt=(game,at)=>at&&!isNaN(new Date(at))?`${game} · ${ago(at)}`:game;
-function paintG(p,d){
+function paintG(p,d,man){
   if(p==="xbox"){gDiag.xbox=d.diag?"Logros: "+d.diag:"";const av=$("xbAv");if(d.pic){av.style.backgroundImage=`url("${d.pic}")`;av.style.backgroundSize="cover";av.textContent=""}else{av.style.backgroundImage="";av.textContent=(d.tag||"X")[0].toUpperCase()}$("xbTag").textContent=d.tag;$("xbG").textContent=fmt(d.score);$("xbA").textContent=d.ach==null?"–":fmt(d.ach);$("xbL").textContent=d.last?gTxt(d.last.game,d.last.at):"–";}
   else if(p==="steam"){$("stH").textContent=fmt(d.hours)+" h";$("st2").textContent="+"+fmt(d.two,1)+" h";$("stM").textContent=d.top?`${d.top.name} · ${fmt(d.top.hours)} h`:"–";
     const b=d.bars&&d.bars.length?d.bars:[0];$("stChart").innerHTML=bars(b,null,b.length-1,d.names||null,"h");img("stChart","Horas por juego en las últimas 2 semanas: "+(d.names?d.names.map((n,i)=>n+" "+b[i]+" h").join(", "):"sin actividad"))}
   else if(p==="ps"){$("psL").textContent=d.level;$("ps1").textContent=d.plat+" · "+d.gold;$("ps2").textContent=fmt(d.silver)+" · "+fmt(d.bronze);$("psLast").textContent=d.last?gTxt(d.last.game,d.last.at):"–"}
   else if(p==="nintendo"){nsCode=d.code;$("nsCode").textContent=d.code}
-  gLive[p]=true;gNotes();
+  if(!man)gLive[p]=true;gNotes();
 }
 let nsCode=DATA.nintendo.code;
+// PlayStation: trofeos escritos a mano (guardados en este navegador). Si algún día se activa NPSSO en Netlify, los datos automáticos pasan por delante.
+const PSK="psManual";
+function psLoad(){try{const m=JSON.parse(sget(PSK)||"null");return m&&typeof m==="object"?m:null}catch(e){return null}}
+function paintPs(){const m=psLoad();
+  if(m)paintG("ps",{level:m.level,plat:m.plat,gold:m.gold,silver:m.silver,bronze:m.bronze,last:m.last?{game:m.last,at:null}:null},true);
+  else{$("psL").textContent="–";$("ps1").textContent="–";$("ps2").textContent="–";$("psLast").textContent="–";gNotes()}}
+const psNum=(id,mx)=>{const v=Math.round(+$(id).value);return isFinite(v)&&v>=0&&v<=mx?v:0};
+$("psEd").onclick=()=>{const f=$("psF");f.hidden=!f.hidden;if(!f.hidden){const m=psLoad()||{};$("pfL").value=m.level||"";$("pfP").value=m.plat||"";$("pfG").value=m.gold||"";$("pfS").value=m.silver||"";$("pfB").value=m.bronze||"";$("pfT").value=m.last||"";$("pfL").focus()}};
+$("psF").onsubmit=ev=>{ev.preventDefault();sset(PSK,JSON.stringify({level:psNum("pfL",999),plat:psNum("pfP",9999),gold:psNum("pfG",9999),silver:psNum("pfS",9999),bronze:psNum("pfB",99999),last:$("pfT").value.trim().slice(0,60)}));$("psF").hidden=true;paintPs()};
 const G_SEC={xbox:()=>$("gaming"),steam:()=>$("stH").closest("section"),ps:()=>$("psL").closest("section")};
-function gNotes(){for(const k in G_SEC){const sec=G_SEC[k]();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive[k]?(gDiag[k]||""):"Datos de ejemplo"+(gErr[k]?" · "+(GE[gErr[k].split(" ")[0]]||gErr[k].split(" ")[0])+(gErr[k].includes(" ")?" "+gErr[k].split(" ")[1]:"")+(gDet[k]?" · "+gDet[k]:""):"")}}
+function gNotes(){for(const k in G_SEC){if(k==="ps"){const sec=G_SEC.ps();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive.ps?"":psLoad()?"Escritos a mano":"Pulsa Editar para poner tus trofeos";continue}const sec=G_SEC[k]();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive[k]?(gDiag[k]||""):"Datos de ejemplo"+(gErr[k]?" · "+(GE[gErr[k].split(" ")[0]]||gErr[k].split(" ")[0])+(gErr[k].includes(" ")?" "+gErr[k].split(" ")[1]:"")+(gDet[k]?" · "+gDet[k]:""):"")}}
 paintG0();
-function paintG0(){const x=DATA.xbox;paintG("xbox",{tag:x.tag,score:x.score,ach:x.ach,last:{game:x.last,at:null}});const st=DATA.steam;paintG("steam",{hours:st.hours,two:st.two,bars:st.bars,names:null,top:{name:st.top.split(" · ")[0],hours:parseInt(st.top.split(" · ")[1])}});const q=DATA.ps;paintG("ps",{level:q.level,plat:q.plat,gold:q.gold,silver:q.silver,bronze:q.bronze,last:{game:q.last,at:null}});paintG("nintendo",DATA.nintendo);for(const k in gLive)delete gLive[k];gNotes()}
+function paintG0(){const x=DATA.xbox;paintG("xbox",{tag:x.tag,score:x.score,ach:x.ach,last:{game:x.last,at:null}});const st=DATA.steam;paintG("steam",{hours:st.hours,two:st.two,bars:st.bars,names:null,top:{name:st.top.split(" · ")[0],hours:parseInt(st.top.split(" · ")[1])}});paintG("nintendo",DATA.nintendo);paintPs();for(const k in gLive)delete gLive[k];gNotes()}
 $("nsCopy").onclick=async()=>{const b=$("nsCopy");try{await navigator.clipboard.writeText(nsCode);b.textContent="Copiado"}catch(e){b.textContent="No se pudo copiar"}setTimeout(()=>b.textContent="Copiar código",1500)};
 async function loadGaming(){
   const key=sget(SK);if(!key)return;
