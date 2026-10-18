@@ -40,6 +40,16 @@ await t('xbox: gamertag en otras formas de respuesta y diagnóstico de campos', 
   try { await getXbox({ env: { XBL_API_KEY: 'k' }, fetchImpl: async () => resp({ code: 5, message: 'x' }) }); assert.fail('debía fallar'); }
   catch (e) { assert.equal(e.kind, 'api'); assert.ok(e.message.includes('code, message')); assert.ok(!e.message.includes('x') || e.message.includes('campos')); }
 });
+await t('xbox: logros en otras formas, avatar y diagnóstico si no encuentra logros', async () => {
+  const f = async u => u.endsWith('/account')
+    ? resp({ profileUsers: [{ settings: [{ id: 'Gamertag', value: 'F' }, { id: 'Gamerscore', value: '10' }, { id: 'GameDisplayPicRaw', value: 'https://images.example/p.png' }] }] })
+    : resp({ content: { titles: [{ titleName: 'X', currentAchievements: '4', titleHistory: { lastTimePlayed: '2026-10-01T00:00:00Z' } }, { name: 'Y', achievement: { currentAchievements: 6 }, lastUnlock: '2026-10-05T00:00:00Z' }] } });
+  const d = await getXbox({ env: { XBL_API_KEY: 'k' }, fetchImpl: f });
+  assert.equal(d.ach, 10); assert.equal(d.last.game, 'Y'); assert.equal(d.pic, 'https://images.example/p.png'); assert.equal(d.diag, undefined);
+  const g = async u => u.endsWith('/account') ? resp({ profileUsers: [{ settings: [{ id: 'Gamertag', value: 'F' }] }] }) : resp({ algo: [{ nombre: 'z' }] });
+  const e = await getXbox({ env: { XBL_API_KEY: 'k' }, fetchImpl: g });
+  assert.equal(e.ach, 0); assert.ok(e.diag.includes('respuesta: algo') && e.diag.includes('nombre'));
+});
 const fakePsn = (calls = []) => ({
   exchangeNpssoForAccessCode: async () => { calls.push('npsso'); return 'code'; },
   exchangeAccessCodeForAuthTokens: async () => { calls.push('code'); return { accessToken: 'A1', expiresIn: 3600, refreshToken: 'R1', refreshTokenExpiresIn: 5184000 }; },

@@ -33,12 +33,23 @@ export async function getSteam({ env, fetchImpl = fetch }) {
   };
 }
 
+const num = v => (typeof v === 'number' && isFinite(v)) ? v : (typeof v === 'string' && v.trim() !== '' && isFinite(+v)) ? +v : null;
+function xboxTitles(a) {
+  const c = [a?.titles, a?.content?.titles, a?.data?.titles, Array.isArray(a) ? a : null];
+  for (const x of c) if (Array.isArray(x)) return x.filter(t => t && typeof t === 'object');
+  if (a && typeof a === 'object') for (const v of Object.values(a)) if (Array.isArray(v) && v.length && typeof v[0] === 'object') return v;
+  return [];
+}
+const titleAch = t => num(t?.achievement?.currentAchievements) ?? num(t?.currentAchievements) ?? num(t?.achievements?.current) ?? num(t?.achievement?.achievementsEarned) ?? 0;
+const titleDate = t => [t?.lastUnlock, t?.achievement?.lastUnlock, t?.titleHistory?.lastTimePlayed, t?.lastTimePlayed, t?.lastPlayed]
+  .find(d => typeof d === 'string' && d && !d.startsWith('0001') && !isNaN(new Date(d))) || null;
+
 // ---------- Xbox (OpenXBL, xbl.io). No hay API oficial. ----------
 // OpenXBL: busca el gamertag y el gamerscore tanto en "settings" ([{id,value}]) como en campos sueltos, a cualquier profundidad.
 function findProfile(root) {
-  let tag = null, score = null;
+  let tag = null, score = null, pic = null;
   const seen = new Set(), q = [root];
-  while (q.length && (tag === null || score === null)) {
+  while (q.length && (tag === null || score === null || pic === null)) {
     const o = q.shift();
     if (!o || typeof o !== 'object' || seen.has(o)) continue;
     seen.add(o);
@@ -46,6 +57,7 @@ function findProfile(root) {
       const id = o.id.toLowerCase();
       if (tag === null && (id === 'gamertag' || id === 'moderngamertag') && o.value) tag = String(o.value);
       if (score === null && id === 'gamerscore' && o.value !== '' && !isNaN(+o.value)) score = +o.value;
+      if (pic === null && (id === 'gamedisplaypicraw' || id === 'appdisplaypicraw') && /^https:\/\//.test(String(o.value))) pic = String(o.value);
     }
     for (const [k, v] of Object.entries(o)) {
       const kk = k.toLowerCase();
@@ -54,27 +66,31 @@ function findProfile(root) {
       if (v && typeof v === 'object') q.push(v);
     }
   }
-  return { tag, score };
+  return { tag, score, pic };
 }
 export async function getXbox({ env, fetchImpl = fetch }) {
   if (!env.XBL_API_KEY) throw new GamingError('config');
   const h = { 'X-Authorization': env.XBL_API_KEY, accept: 'application/json', 'accept-language': 'es-ES' };
   const acc = await getJson('https://api.xbl.io/v2/account', fetchImpl, h);
-  const { tag, score: sc } = findProfile(acc);
+  const { tag, score: sc, pic } = findProfile(acc);
   if (!tag) {
     const keys = acc && typeof acc === 'object' ? Object.keys(acc).slice(0, 8).join(', ') : typeof acc;
     throw new GamingError('api', null, 'sin gamertag; campos recibidos: ' + (keys || 'ninguno'));
   }
   const score = sc || 0;
-  let ach = null, last = null;
+  let ach = null, last = null, diag = null;
   try {
     const a = await getJson('https://api.xbl.io/v2/achievements', fetchImpl, h);
-    const titles = Array.isArray(a?.titles) ? a.titles : [];
-    ach = titles.reduce((s, t) => s + (+t?.achievement?.currentAchievements || 0), 0);
-    const withDate = titles.filter(t => t?.lastUnlock && !String(t.lastUnlock).startsWith('0001')).sort((x, y) => String(y.lastUnlock).localeCompare(String(x.lastUnlock)));
-    if (withDate[0]) last = { game: withDate[0].name || 'Juego', at: withDate[0].lastUnlock };
-  } catch (e) { if (e.kind === 'rate') throw e; }
-  return { tag, score, ach, last };
+    const titles = xboxTitles(a);
+    ach = titles.reduce((n, t) => n + (titleAch(t)), 0);
+    const dated = titles.map(t => ({ t, at: titleDate(t) })).filter(x => x.at).sort((x, y) => y.at.localeCompare(x.at));
+    if (dated[0]) last = { game: dated[0].t.name || dated[0].t.titleName || 'Juego', at: dated[0].at };
+    if (!ach || !last) {
+      const ks = o => (o && typeof o === 'object' ? Object.keys(o).slice(0, 10).join(', ') : '–');
+      diag = `respuesta: ${ks(a)}; juegos: ${titles.length}; campos de un juego: ${ks(titles[0])}; logros: ${ks(titles[0]?.achievement)}`;
+    }
+  } catch (e) { if (e.kind === 'rate') throw e; diag = 'logros no disponibles (' + (e.status || e.kind) + ')'; }
+  return { tag, score, ach, last, pic, ...(diag ? { diag } : {}) };
 }
 
 // ---------- PlayStation (psn-api, no oficial). El NPSSO equivale a tu contraseña de PlayStation. ----------
