@@ -252,7 +252,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
   <section class="card c4" id="trabajo"><h2>Trabajo</h2>
     <div class="sub" id="calTitle" style="margin-bottom:8px"></div><div class="cal" id="cal" role="list" aria-label="Calendario de trabajo del mes"></div>
     <div class="sub" id="calInfo" role="status"></div>
-    <div class="leg"><span><i class="lw"></i>Trabajado</span><span><i class="lf"></i>No trabajado</span><span id="legP"><i class="lp"></i>Sin planificar</span></div>
+    <div class="leg"><span><i class="lw"></i>Trabajado</span><span><i class="lf"></i>No trabajado</span></div>
   </section>
 
   <section class="card c4" id="vida"><h2>Jubilación</h2>
@@ -589,8 +589,9 @@ const WORK=["Mañana","Jornada partida","Mediodía","Tarde"];
 let shifts=null,calNote="Ejemplo: aún no se han leído tus turnos.";
 const dkey=(yy,mm,dd)=>yy+"-"+String(mm+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
 // Solo dos estados: trabajado (mañana, mediodía, tarde, jornada partida) y no trabajado (todo lo demás).
-const kindOf=l=>!l||!l.length?"p":l.some(x=>WORK.includes(x))?"w":"f";
-const KIND_TXT={w:"trabajado",f:"no trabajado",p:"sin planificar"};
+// Sin ningún turno con tu nombre ese día (fines de semana, festivos...) = no trabajado.
+const kindOf=l=>l&&l.some(x=>WORK.includes(x))?"w":"f";
+const KIND_TXT={w:"trabajado",f:"no trabajado",p:"por venir"};
 function paintWork(){
   const T=DATA.turnos,cyc=T.cycleWork+T.cycleOff,st=new Date(T.start+"T00:00");
   const dim=new Date(y,m+1,0).getDate(),first=(new Date(y,m,1).getDay()+6)%7;
@@ -603,7 +604,6 @@ function paintWork(){
   }
   $("cal").innerHTML=cal;$("calTitle").textContent=now.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
   $("calInfo").textContent=shifts&&/^Actualizado/.test(calNote)?"":calNote;
-  $("legP").hidden=!$("cal").querySelector(".d.p");
 }
 paintWork();
 async function loadTurnos(){
