@@ -428,6 +428,8 @@ async function scanPrs(key){
 try{const c=JSON.parse(sget(SC)||"null");if(c&&new Date(c.updated).getFullYear()===y&&sget(SK))useStrava(c,"Strava (guardado)")}catch(e){}
 $("runBtn").onclick=()=>{if(!sget(SK)){$("keyF").hidden=false;$("keyI").focus()}else loadStrava(true)};
 $("keyF").onsubmit=ev=>{ev.preventDefault();const v=$("keyI").value.trim();if(!v)return;sset(SK,v);$("keyI").value="";$("keyF").hidden=true;loadStrava(true);loadGaming();if(typeof load==="function")load()};
+// Acceso directo de iOS: tiene su propio almacenamiento (vacío). Si no hay clave, pídela nada más abrir.
+try{if((navigator.standalone||matchMedia("(display-mode: standalone)").matches)&&!sget(SK))$("keyF").hidden=false}catch(e){}
 
 // Ranking y kilómetros de amigos
 // Con tu clave puesta, los kilómetros y los amigos se guardan en tu servidor de Netlify y se ven igual en todos tus dispositivos.
