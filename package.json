@@ -2,6 +2,11 @@
   "name": "dashboard-personal",
   "private": true,
   "type": "module",
-  "dependencies": { "@netlify/blobs": "^8.1.0" },
-  "scripts": { "test": "node test/core.test.mjs && node test/friends.test.mjs" }
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "psn-api": "^2.18.0"
+  },
+  "scripts": {
+    "test": "node test/core.test.mjs && node test/friends.test.mjs && node test/gaming.test.mjs"
+  }
 }

@@ -61,3 +61,18 @@ La API de Strava limita las peticiones por periodos de 15 minutos y por día (el
 
 ## Pruebas
 `npm install && npm test`
+
+## Gaming (Steam, Xbox, PlayStation, Nintendo)
+
+Las tarjetas de gaming leen `/.netlify/functions/gaming?p=steam|xbox|ps|nintendo` con tu clave del dashboard. Cada plataforma se activa
+añadiendo sus variables en Netlify (Site configuration → Environment variables, solo en Production, marcadas como secretas). Sin variables, la tarjeta sigue con datos de ejemplo.
+
+| Plataforma | Variables | Notas |
+| --- | --- | --- |
+| Steam | `STEAM_API_KEY`, `STEAM_ID` | Clave en steamcommunity.com/dev/apikey. `STEAM_ID` es el número de 17 cifras. El perfil debe tener "Detalles del juego" en público. |
+| Xbox | `XBL_API_KEY` | Clave gratuita de OpenXBL (xbl.io). No es una API oficial de Microsoft. |
+| PlayStation | `NPSSO` | Código de sesión de PlayStation: **equivale a tu contraseña**. No es oficial, caduca (unos 2 meses) y hay que renovarlo. |
+| Nintendo | `NINTENDO_CODE` | Tu código de amigo `SW-0000-0000-0000`. No hay API de Nintendo. |
+
+Cada plataforma se guarda 30 minutos en el servidor; si una falla, se enseña lo último guardado.
+Tras cambiar variables hay que volver a desplegar (Deploys → Trigger deploy).

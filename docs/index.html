@@ -232,7 +232,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
   <section class="card c4" id="anShoes"></section>
 
   <section class="card c3" id="gaming"><h2>Xbox</h2>
-    <div class="tag"><div class="av">F</div><div><b id="xbTag"></b><div class="sub"><span id="xbG"></span> G</div></div></div>
+    <div class="tag"><div class="av" id="xbAv">F</div><div><b id="xbTag"></b><div class="sub"><span id="xbG"></span> G</div></div></div>
     <div class="kv"><span class="sub">Logros</span><b id="xbA"></b></div>
     <div class="kv"><span class="sub">Último logro</span><b id="xbL"></b></div>
   </section>
@@ -390,7 +390,7 @@ async function scanPrs(key){
 }
 try{const c=JSON.parse(sget(SC)||"null");if(c&&new Date(c.updated).getFullYear()===y&&sget(SK))useStrava(c,"Strava (guardado)")}catch(e){}
 $("runBtn").onclick=()=>{if(!sget(SK)){$("keyF").hidden=false;$("keyI").focus()}else loadStrava(true)};
-$("keyF").onsubmit=ev=>{ev.preventDefault();const v=$("keyI").value.trim();if(!v)return;sset(SK,v);$("keyI").value="";$("keyF").hidden=true;loadStrava(true);if(typeof load==="function")load()};
+$("keyF").onsubmit=ev=>{ev.preventDefault();const v=$("keyI").value.trim();if(!v)return;sset(SK,v);$("keyI").value="";$("keyF").hidden=true;loadStrava(true);loadGaming();if(typeof load==="function")load()};
 
 // Ranking y kilómetros de amigos
 // Con tu clave puesta, los kilómetros y los amigos se guardan en tu servidor de Netlify y se ven igual en todos tus dispositivos.
@@ -578,13 +578,36 @@ render();afterRun=()=>{render();paintAn()};paintAn();load();loadStrava();
 let lastW=0;try{new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(lastW&&w!==lastW){try{anPace(S);anProj(S)}catch(e){}}lastW=w}).observe(document.querySelector('main'))}catch(e){}
 
 
-// Gaming
-const x=DATA.xbox;$("xbTag").textContent=x.tag;$("xbG").textContent=fmt(x.score);$("xbA").textContent=fmt(x.ach);$("xbL").textContent=x.last;
-$("stH").textContent=fmt(DATA.steam.hours)+" h";$("st2").textContent="+"+fmt(DATA.steam.two,1)+" h";$("stM").textContent=DATA.steam.top;
-$("stChart").innerHTML=bars(DATA.steam.bars,null,DATA.steam.bars.length-1);
-img("stChart","Actividad reciente en Steam (horas): "+DATA.steam.bars.join(", "));
-const p=DATA.ps;$("psL").textContent=p.level;$("ps1").textContent=p.plat+" · "+p.gold;$("ps2").textContent=fmt(p.silver)+" · "+fmt(p.bronze);$("psLast").textContent=p.last;
-$("nsCode").textContent=DATA.nintendo.code;$("nsCopy").onclick=async()=>{const b=$("nsCopy");try{await navigator.clipboard.writeText(DATA.nintendo.code);b.textContent="Copiado"}catch(e){b.textContent="No se pudo copiar"}setTimeout(()=>b.textContent="Copiar código",1500)};
+// Gaming: datos reales desde tu servidor de Netlify (Steam, Xbox, PlayStation, Nintendo). Mientras no lleguen, se ven datos de ejemplo.
+const GK="gamingCache",GP=["steam","xbox","ps","nintendo"],gLive={};
+const gTxt=(game,at)=>at&&!isNaN(new Date(at))?`${game} · ${ago(at)}`:game;
+function paintG(p,d){
+  if(p==="xbox"){$("xbTag").textContent=d.tag;$("xbG").textContent=fmt(d.score);$("xbA").textContent=d.ach==null?"–":fmt(d.ach);$("xbL").textContent=d.last?gTxt(d.last.game,d.last.at):"–";$("xbAv").textContent=(d.tag||"X")[0].toUpperCase()}
+  else if(p==="steam"){$("stH").textContent=fmt(d.hours)+" h";$("st2").textContent="+"+fmt(d.two,1)+" h";$("stM").textContent=d.top?`${d.top.name} · ${fmt(d.top.hours)} h`:"–";
+    const b=d.bars&&d.bars.length?d.bars:[0];$("stChart").innerHTML=bars(b,null,b.length-1,d.names||null,"h");img("stChart","Horas por juego en las últimas 2 semanas: "+(d.names?d.names.map((n,i)=>n+" "+b[i]+" h").join(", "):"sin actividad"))}
+  else if(p==="ps"){$("psL").textContent=d.level;$("ps1").textContent=d.plat+" · "+d.gold;$("ps2").textContent=fmt(d.silver)+" · "+fmt(d.bronze);$("psLast").textContent=d.last?gTxt(d.last.game,d.last.at):"–"}
+  else if(p==="nintendo"){nsCode=d.code;$("nsCode").textContent=d.code}
+  gLive[p]=true;gNotes();
+}
+let nsCode=DATA.nintendo.code;
+const G_SEC={xbox:()=>$("gaming"),steam:()=>$("stH").closest("section"),ps:()=>$("psL").closest("section")};
+function gNotes(){for(const k in G_SEC){const sec=G_SEC[k]();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive[k]?"":"Datos de ejemplo"}}
+paintG0();
+function paintG0(){const x=DATA.xbox;paintG("xbox",{tag:x.tag,score:x.score,ach:x.ach,last:{game:x.last,at:null}});const st=DATA.steam;paintG("steam",{hours:st.hours,two:st.two,bars:st.bars,names:null,top:{name:st.top.split(" · ")[0],hours:parseInt(st.top.split(" · ")[1])}});const q=DATA.ps;paintG("ps",{level:q.level,plat:q.plat,gold:q.gold,silver:q.silver,bronze:q.bronze,last:{game:q.last,at:null}});paintG("nintendo",DATA.nintendo);for(const k in gLive)delete gLive[k];gNotes()}
+$("nsCopy").onclick=async()=>{const b=$("nsCopy");try{await navigator.clipboard.writeText(nsCode);b.textContent="Copiado"}catch(e){b.textContent="No se pudo copiar"}setTimeout(()=>b.textContent="Copiar código",1500)};
+async function loadGaming(){
+  const key=sget(SK);if(!key)return;
+  let c={};try{c=JSON.parse(sget(GK)||"{}")||{}}catch(e){}
+  for(const p of GP)if(c[p])try{paintG(p,c[p])}catch(e){}
+  await Promise.all(GP.map(async p=>{
+    try{
+      const res=await fetch(API_BASE+"/.netlify/functions/gaming?p="+p,{headers:{"x-dash-key":key}});
+      const d=await res.json();
+      if(res.ok&&d&&d.ok&&d.data){paintG(p,d.data);c[p]=d.data;sset(GK,JSON.stringify(c))}
+    }catch(e){}
+  }));
+}
+loadGaming();
 
 // Calendario de trabajo: lee tus turnos de la app Turnos (Firestore, documento turnos/data, el mismo que su modo ?view=1).
 // Solo se guardan tus turnos; los de los demás se descartan al leerlos. Si no responde, se enseña un ciclo de ejemplo.
