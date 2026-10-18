@@ -34,15 +34,38 @@ export async function getSteam({ env, fetchImpl = fetch }) {
 }
 
 // ---------- Xbox (OpenXBL, xbl.io). No hay API oficial. ----------
-const setting = (user, id) => (user?.settings || []).find(s => String(s.id).toLowerCase() === id)?.value;
+// OpenXBL: busca el gamertag y el gamerscore tanto en "settings" ([{id,value}]) como en campos sueltos, a cualquier profundidad.
+function findProfile(root) {
+  let tag = null, score = null;
+  const seen = new Set(), q = [root];
+  while (q.length && (tag === null || score === null)) {
+    const o = q.shift();
+    if (!o || typeof o !== 'object' || seen.has(o)) continue;
+    seen.add(o);
+    if (!Array.isArray(o) && typeof o.id === 'string' && 'value' in o) {
+      const id = o.id.toLowerCase();
+      if (tag === null && (id === 'gamertag' || id === 'moderngamertag') && o.value) tag = String(o.value);
+      if (score === null && id === 'gamerscore' && o.value !== '' && !isNaN(+o.value)) score = +o.value;
+    }
+    for (const [k, v] of Object.entries(o)) {
+      const kk = k.toLowerCase();
+      if (tag === null && (kk === 'gamertag' || kk === 'moderngamertag') && typeof v === 'string' && v) tag = v;
+      if (score === null && kk === 'gamerscore' && v !== '' && v != null && typeof v !== 'object' && !isNaN(+v)) score = +v;
+      if (v && typeof v === 'object') q.push(v);
+    }
+  }
+  return { tag, score };
+}
 export async function getXbox({ env, fetchImpl = fetch }) {
   if (!env.XBL_API_KEY) throw new GamingError('config');
   const h = { 'X-Authorization': env.XBL_API_KEY, accept: 'application/json', 'accept-language': 'es-ES' };
   const acc = await getJson('https://xbl.io/api/v2/account', fetchImpl, h);
-  const user = acc?.profileUsers?.[0];
-  const tag = setting(user, 'gamertag') || setting(user, 'modernGamertag');
-  if (!user || !tag) throw new GamingError('api', null, 'perfil sin gamertag');
-  const score = +setting(user, 'gamerscore') || 0;
+  const { tag, score: sc } = findProfile(acc);
+  if (!tag) {
+    const keys = acc && typeof acc === 'object' ? Object.keys(acc).slice(0, 8).join(', ') : typeof acc;
+    throw new GamingError('api', null, 'sin gamertag; campos recibidos: ' + (keys || 'ninguno'));
+  }
+  const score = sc || 0;
   let ach = null, last = null;
   try {
     const a = await getJson('https://xbl.io/api/v2/achievements', fetchImpl, h);

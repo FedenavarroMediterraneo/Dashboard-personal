@@ -33,6 +33,13 @@ await t('xbox: si fallan los logros, sigue dando el perfil; respuesta rara = err
   await rejects(getXbox({ env: { XBL_API_KEY: 'k' }, fetchImpl: async () => resp({ nada: 1 }) }), 'api');
   await rejects(getXbox({ env: {}, fetchImpl: async () => resp({}) }), 'config');
 });
+await t('xbox: gamertag en otras formas de respuesta y diagnóstico de campos', async () => {
+  const alt = async u => u.endsWith('/account') ? resp({ people: [{ xuid: '1', gamertag: 'Fede', gamerScore: '900' }] }) : resp({ titles: [] });
+  const d = await getXbox({ env: { XBL_API_KEY: 'k' }, fetchImpl: alt });
+  assert.equal(d.tag, 'Fede'); assert.equal(d.score, 900);
+  try { await getXbox({ env: { XBL_API_KEY: 'k' }, fetchImpl: async () => resp({ code: 5, message: 'x' }) }); assert.fail('debía fallar'); }
+  catch (e) { assert.equal(e.kind, 'api'); assert.ok(e.message.includes('code, message')); assert.ok(!e.message.includes('x') || e.message.includes('campos')); }
+});
 const fakePsn = (calls = []) => ({
   exchangeNpssoForAccessCode: async () => { calls.push('npsso'); return 'code'; },
   exchangeAccessCodeForAuthTokens: async () => { calls.push('code'); return { accessToken: 'A1', expiresIn: 3600, refreshToken: 'R1', refreshTokenExpiresIn: 5184000 }; },

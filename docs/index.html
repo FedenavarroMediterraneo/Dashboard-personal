@@ -579,7 +579,7 @@ let lastW=0;try{new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.wid
 
 
 // Gaming: datos reales desde tu servidor de Netlify (Steam, Xbox, PlayStation, Nintendo). Mientras no lleguen, se ven datos de ejemplo.
-const GK="gamingCache",GP=["steam","xbox","ps","nintendo"],gLive={},gErr={};
+const GK="gamingCache",GP=["steam","xbox","ps","nintendo"],gLive={},gErr={},gDet={};
 const GE={config:"falta configurarlo en Netlify",private:"perfil privado o sin juegos visibles",auth:"clave rechazada",rate:"límite de peticiones",api:"el servicio no responde bien",network:"sin conexión con el servicio",format:"código con formato incorrecto",key:"clave del dashboard incorrecta"};
 const gTxt=(game,at)=>at&&!isNaN(new Date(at))?`${game} · ${ago(at)}`:game;
 function paintG(p,d){
@@ -592,7 +592,7 @@ function paintG(p,d){
 }
 let nsCode=DATA.nintendo.code;
 const G_SEC={xbox:()=>$("gaming"),steam:()=>$("stH").closest("section"),ps:()=>$("psL").closest("section")};
-function gNotes(){for(const k in G_SEC){const sec=G_SEC[k]();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive[k]?"":"Datos de ejemplo"+(gErr[k]?" · "+(GE[gErr[k].split(" ")[0]]||gErr[k].split(" ")[0])+(gErr[k].includes(" ")?" "+gErr[k].split(" ")[1]:""):"")}}
+function gNotes(){for(const k in G_SEC){const sec=G_SEC[k]();let n=sec.querySelector(".gn");if(!n){n=document.createElement("div");n.className="sub gn";n.style.marginTop="6px";sec.appendChild(n)}n.textContent=gLive[k]?"":"Datos de ejemplo"+(gErr[k]?" · "+(GE[gErr[k].split(" ")[0]]||gErr[k].split(" ")[0])+(gErr[k].includes(" ")?" "+gErr[k].split(" ")[1]:"")+(gDet[k]?" · "+gDet[k]:""):"")}}
 paintG0();
 function paintG0(){const x=DATA.xbox;paintG("xbox",{tag:x.tag,score:x.score,ach:x.ach,last:{game:x.last,at:null}});const st=DATA.steam;paintG("steam",{hours:st.hours,two:st.two,bars:st.bars,names:null,top:{name:st.top.split(" · ")[0],hours:parseInt(st.top.split(" · ")[1])}});const q=DATA.ps;paintG("ps",{level:q.level,plat:q.plat,gold:q.gold,silver:q.silver,bronze:q.bronze,last:{game:q.last,at:null}});paintG("nintendo",DATA.nintendo);for(const k in gLive)delete gLive[k];gNotes()}
 $("nsCopy").onclick=async()=>{const b=$("nsCopy");try{await navigator.clipboard.writeText(nsCode);b.textContent="Copiado"}catch(e){b.textContent="No se pudo copiar"}setTimeout(()=>b.textContent="Copiar código",1500)};
@@ -604,7 +604,7 @@ async function loadGaming(){
     try{
       const res=await fetch(API_BASE+"/.netlify/functions/gaming?p="+p,{headers:{"x-dash-key":key}});
       const d=await res.json();
-      if(res.ok&&d&&d.ok&&d.data){delete gErr[p];paintG(p,d.data);c[p]=d.data;sset(GK,JSON.stringify(c))}else{gErr[p]=((d&&d.error)||"api")+(d&&d.status?" ("+d.status+")":"");gNotes()}
+      if(res.ok&&d&&d.ok&&d.data){delete gErr[p];paintG(p,d.data);c[p]=d.data;sset(GK,JSON.stringify(c))}else{gErr[p]=((d&&d.error)||"api")+(d&&d.status?" ("+d.status+")":"");gDet[p]=(d&&d.detail)||"";gNotes()}
     }catch(e){}
   }));
 }
