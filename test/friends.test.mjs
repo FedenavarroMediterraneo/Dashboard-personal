@@ -50,6 +50,17 @@ await t('PlayStation a mano: guarda, sanea y no se pierde con otras acciones', a
   assert.deepEqual(d.ps, { level: 12, plat: 1, gold: 2, silver: 3, bronze: 4, last: 'Juegob' });
   assert.equal((await applyAction(s, { action: 'ps', ps: 'x' })).status, 400);
 });
+await t('roleOf: admin, solo lectura y claves malas', async () => {
+  const { roleOf } = await import('../netlify/lib/http.mjs');
+  const rq = k => ({ headers: { get: () => k } });
+  const env = { DASH_KEY: 'admin-secreta-123', VIEW_KEY: 'solo-ver-456789' };
+  assert.equal(roleOf(rq('admin-secreta-123'), env), 'admin');
+  assert.equal(roleOf(rq('solo-ver-456789'), env), 'view');
+  assert.equal(roleOf(rq('otra'), env), null);
+  assert.equal(roleOf(rq(null), env), null);
+  assert.equal(roleOf(rq('corta'), { DASH_KEY: 'x'.repeat(20), VIEW_KEY: 'corta' }), null);
+  assert.equal(roleOf(rq(''), { DASH_KEY: 'x'.repeat(20) }), null);
+});
 await t('acción desconocida o cuerpo vacío', async () => {
   const s = mem();
   assert.equal((await applyAction(s, { action: 'borrar-todo' })).status, 400);

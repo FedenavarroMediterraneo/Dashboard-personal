@@ -1,6 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { safeEq, fetchDashboardData, stepEfforts, StravaError, CACHE_MS } from '../lib/strava-core.mjs';
-import { responder } from '../lib/http.mjs';
+import { responder, roleOf } from '../lib/http.mjs';
 
 export default async (req) => {
   const { json, preflight } = responder(req);
@@ -8,13 +8,16 @@ export default async (req) => {
   if (req.method === 'OPTIONS') return preflight();
   if (!env.DASH_KEY || !env.STRAVA_CLIENT_ID || !env.STRAVA_CLIENT_SECRET)
     return json({ ok: false, error: 'config' }, 500);
-  if (!safeEq(req.headers.get('x-dash-key'), env.DASH_KEY)) return json({ ok: false, error: 'key' }, 401);
+  const role = roleOf(req, env);
+  if (!role) return json({ ok: false, error: 'key' }, 401);
 
   const store = getStore('strava');
   const cached = await store.get('cache', { type: 'json' }).catch(() => null);
   const q = new URL(req.url).searchParams;
   const fresh = cached && Date.now() - new Date(cached.updated).getTime() < CACHE_MS;
   // Primera pintura rápida: devuelve lo último guardado sin tocar Strava, aunque tenga más de 15 minutos.
+  // Solo lectura: nunca toca Strava, devuelve lo último guardado.
+  if (role !== 'admin') return cached ? json({ ...cached, cached: true, viewer: true }) : json({ ok: false, error: 'nodata' }, 404);
   if (q.get('cached') === '1') return cached ? json({ ...cached, cached: true, stale: !fresh }) : json({ ok: false, error: 'nodata' }, 404);
   if (q.get('step') === 'efforts') {
     if (!cached) return json({ ok: false, error: 'nodata' }, 409);

@@ -135,6 +135,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 .trs svg{width:28px;height:28px;flex:none;stroke-width:0}
 .tp{fill:#9fd8ff;filter:drop-shadow(0 0 4px #5ab4ff)}.tg{fill:#ffc83d}.ts{fill:#d3d8de}.tb{fill:#e0976a}
 .psx #psT{font-size:inherit}
+.viewer #runBtn,.viewer #keyF,.viewer #psEd,.viewer #psF,.viewer #addKm{display:none!important}
 .psf[hidden]{display:none}
 .psf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .psf label{font-size:.75rem;display:flex;flex-direction:column;gap:3px}
@@ -245,7 +246,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
   <section class="card c4"><h2>Ranking de amigos</h2><div class="sub" id="rankMonth" style="margin:-6px 0 8px"></div>
     <ul class="rank" id="rank"></ul><div class="sub" id="rankGap"></div><div class="bar"><i id="rankBar"></i></div>
   </section>
-<section class="card c4 full"><h2>Añadir kilómetros</h2>
+<section class="card c4 full" id="addKm"><h2>Añadir kilómetros</h2>
     <div class="form"><label>Amigo<select id="fN"></select></label><label>Fecha<input type="date" id="fD"></label><label>Kilómetros<input type="number" id="fK" step="0.1" min="0" inputmode="decimal" placeholder="0,0"></label><button class="btn" id="fAdd">Guardar</button></div>
     <div class="sub" id="fMsg" role="status" style="min-height:18px;margin-top:6px"></div>
     <ul class="log" id="log"></ul>
@@ -452,6 +453,8 @@ async function fcall(body){
   return d;
 }
 const localFriends=()=>ls("amigos")||[...DATA.amigos];
+function setRole(r){document.body.classList.toggle("viewer",r==="view");sset("dashRole",r||"")}
+if(sget("dashRole")==="view")document.body.classList.add("viewer");
 async function load(){
   const loc={E:ls("km")||[],A:localFriends()};
   if(sget(SK)){
@@ -466,6 +469,7 @@ async function load(){
         else if(lp){await fcall({action:"ps",ps:lp})}
         paintPs();
       }catch(x){}
+      setRole(d.role);
       E=d.entries;A=d.friends||[...DATA.amigos];remote=true;lastSync=Date.now();
       msg("Sincronizado con la nube.");render();return;
     }catch(e){remote=false;msg(e.code==="key"?"La clave no es correcta. Los kilómetros se guardan solo en este navegador.":"Sin conexión con el servidor. Los kilómetros se guardan solo en este navegador.")}

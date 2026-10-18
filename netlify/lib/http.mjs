@@ -1,3 +1,11 @@
+import { safeEq } from './strava-core.mjs';
+// Rol según la clave: 'admin' (DASH_KEY, todo) o 'view' (VIEW_KEY, solo lectura). VIEW_KEY debe tener 12+ caracteres.
+export function roleOf(req, env) {
+  const k = req.headers.get('x-dash-key');
+  if (env.DASH_KEY && safeEq(k, env.DASH_KEY)) return 'admin';
+  if (env.VIEW_KEY && env.VIEW_KEY.length >= 12 && safeEq(k, env.VIEW_KEY)) return 'view';
+  return null;
+}
 // Respuestas JSON y CORS por petición. ALLOWED_ORIGIN: orígenes del dashboard separados por comas.
 export function responder(req) {
   const allowed = (process.env.ALLOWED_ORIGIN || '').split(',').map(x => x.trim().replace(/\/$/, '')).filter(Boolean);
