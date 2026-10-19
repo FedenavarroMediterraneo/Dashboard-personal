@@ -103,6 +103,26 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 .clk span{display:block;color:var(--mute);font-size:0.8125rem;margin-top:4px}
 .link{display:inline-flex;align-items:center;background:var(--card);color:var(--ink);text-decoration:none;border-radius:999px;padding:10px 16px;font-size:0.8125rem;font-weight:600;box-shadow:var(--shadow)}
 .link:hover{background:var(--soft)}
+.ob{border:0;font-family:inherit;cursor:pointer}
+.orgbar{background:var(--card);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px;display:grid;gap:10px}
+.orgbar[hidden]{display:none}
+.orgh{display:flex;flex-wrap:wrap;gap:6px}
+.orgh button{border:1px dashed var(--mute);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:.8125rem;cursor:pointer}
+.orga{display:flex;flex-wrap:wrap;gap:8px}
+.tb{display:none;align-items:center;justify-content:flex-end;gap:2px;margin:-6px -6px 6px 0}
+body.org .tb,.card.min>.tb{display:flex}
+body:not(.org) .tb .ta{display:none}
+.ta{display:inline-flex;gap:2px}
+.tb button{width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:var(--mute);font:inherit;font-size:1.125rem;line-height:1;cursor:pointer}
+.tb button:hover{background:var(--track)}
+.tb button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.tb [data-a=up]{color:#8a3ea8}.tb [data-a=dn]{color:#1f8a4c}.tb [data-a=x]{color:#b3402f}
+.tb .tl{display:none;margin-right:auto;font-weight:600;font-size:.9375rem;color:var(--ink)}
+.card.min>.tb .tl{display:block}
+.card.min>*:not(.tb){display:none!important}
+.card.gone{display:none!important}
+.xbx .tb button,.psx .tb button,.stx .tb button,.nin .tb button,.xbx .tl,.psx .tl,.stx .tl,.nin .tl{color:#fff}
+.xbx .tb button:hover,.psx .tb button:hover,.stx .tb button:hover,.nin .tb button:hover{background:rgba(255,255,255,.2)}
 .link:focus-visible,.chips button:focus-visible,.add input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
 .chips span{background:var(--soft);border-radius:999px;padding:4px 8px 4px 12px;font-size:0.8125rem;display:flex;align-items:center;gap:6px}
@@ -234,9 +254,14 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
 <main id="top">
 <div class="hero">
   <h1 id="name">Dashboard de Fede</h1>
-  <div class="right"><a class="link" href="https://dashboar-castellon.netlify.app/" target="_blank" rel="noopener">Dashboard Castellón</a><button class="pill" id="themeBtn" aria-label="Cambiar entre modo claro y oscuro"><span>Claro</span><span>Oscuro</span></button></div>
+  <div class="right"><button class="link ob" id="orgBtn" type="button" aria-pressed="false">Organizar</button><a class="link" href="https://dashboar-castellon.netlify.app/" target="_blank" rel="noopener">Dashboard Castellón</a><button class="pill" id="themeBtn" aria-label="Cambiar entre modo claro y oscuro"><span>Claro</span><span>Oscuro</span></button></div>
 </div>
 
+<div class="orgbar" id="orgBar" hidden>
+  <div><b>Organizar fichas</b><div class="sub">Usa ↑ ↓ para mover, − para minimizar y × para ocultar. Se guarda en este dispositivo.</div></div>
+  <div class="orgh" id="orgHid"></div>
+  <div class="orga"><button class="mini" id="orgAll" type="button">Mostrar todas</button><button class="mini" id="orgReset" type="button">Restablecer panel</button><button class="mini" id="orgDone" type="button">Hecho</button></div>
+</div>
 <div class="grid">
   <section class="card c4" id="deporte"><h2>Running</h2>
     <div class="big"><span id="runMonth"></span> <small>km</small><span class="up" id="runUp"></span></div>
@@ -246,7 +271,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     <div class="runst"><span class="sub" id="runSt" role="status"></span><button class="mini" id="runBtn" type="button">Conectar Strava</button></div>
     <form class="keyf" id="keyF" hidden><label class="sub" for="keyI">Clave de tu dashboard</label><div><input id="keyI" type="password" autocomplete="current-password" required><button class="mini" type="submit">Guardar</button></div></form>
   </section>
-  <section class="card c4"><h2>Ranking de amigos</h2><div class="sub" id="rankMonth" style="margin:-6px 0 8px"></div>
+  <section class="card c4" id="cRank"><h2>Ranking de amigos</h2><div class="sub" id="rankMonth" style="margin:-6px 0 8px"></div>
     <ul class="rank" id="rank"></ul><div class="sub" id="rankGap"></div><div class="bar"><i id="rankBar"></i></div>
   </section>
 <section class="card c4 full" id="addKm"><h2>Añadir kilómetros</h2>
@@ -272,7 +297,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     <div class="kv"><span class="sub">Logros</span><b id="xbA"></b></div>
     <div class="kv"><span class="sub">Último logro</span><b id="xbL"></b></div>
   </section>
-  <section class="card c3 stx"><h2>Steam</h2>
+  <section class="card c3 stx" id="cSteam"><h2>Steam</h2>
     <div class="big" id="stH"></div><div class="sub">en total</div>
     <div class="kv"><span class="sub">Últimas 2 semanas</span><b id="st2"></b></div>
     <div class="chart" id="stChart" style="height:40px;--bc:var(--prog);--bn:var(--ink)"></div>
@@ -297,7 +322,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     </form>
     <div class="psb"><a class="btn" id="psAdd" href="https://profile.playstation.com/FedeNavarro" target="_blank" rel="noopener">Añadir amigo</a><button class="mini" id="psEd" type="button">Editar</button></div>
   </section>
-  <section class="card c3 nin">
+  <section class="card c3 nin" id="cNin">
     <div class="nlogo" role="img" aria-label="Nintendo">Nintendo</div>
     <div class="sub">Código de amigo</div><div class="code" id="nsCode"></div>
     <button class="btn" id="nsCopy">Copiar código</button>
@@ -316,7 +341,7 @@ h2{font-size:0.9375rem;margin-bottom:10px;font-weight:650;display:flex;align-ite
     <div class="row3"><div><b id="jubLeft" style="font-size:1rem"></b><span class="sub" id="jubDate"></span></div><div><b id="cot65"></b><span class="sub">cotizados al cumplir 65</span></div><div><b id="cot40"></b><span class="sub">llegas a 40 años cotizados</span></div></div>
     <div class="sub" id="cotNote" style="margin-top:6px"></div>
   </section>
-  <section class="card c4 full"><h2>Cumpleaños</h2>
+  <section class="card c4 full" id="cBday"><h2>Cumpleaños</h2>
     <div class="bdl"><span class="ck" aria-hidden="true">🎂</span><div><div class="big"><small>Faltan</small> <span id="bdDays"></span> <small>días</small></div><div class="sub">para tu cumpleaños número <b id="bdAge"></b>, el <span id="bdDate"></span></div></div></div>
     <div class="bar"><i id="bdBar"></i></div><div class="sub" id="bdTime" style="font-variant-numeric:tabular-nums"></div>
     <div class="life"><div class="batt" id="battery" role="img"></div><b>Life</b></div>
@@ -752,6 +777,45 @@ function cd(n){
 }
 function tick(){cd(new Date())}
 tick();setInterval(tick,1000);
+// Organizar fichas: mover, minimizar y ocultar; se guarda en este dispositivo.
+(function(){
+  const LK="layout",grid=document.querySelector(".grid"),cards=[...grid.querySelectorAll(":scope>section.card")],orig=cards.slice();
+  const cid=c=>c.id,NAMES={cNin:"Nintendo"};
+  const title=c=>{const h=c.querySelector(":scope>h2");return(h&&h.textContent.trim())||NAMES[c.id]||c.id};
+  let L={};try{L=JSON.parse(sget(LK)||"{}")||{}}catch(e){L={}}
+  for(const k of["order","hidden","min"])if(!Array.isArray(L[k]))L[k]=[];
+  const save=()=>sset(LK,JSON.stringify(L));
+  const cur=()=>[...grid.children].filter(e=>cards.includes(e));
+  function place(list){let k=0;[...grid.children].map(e=>cards.includes(e)?list[k++]:e).forEach(e=>grid.appendChild(e))}
+  function mkTb(){const d=document.createElement("div");d.className="tb";d.setAttribute("role","toolbar");
+    d.innerHTML='<span class="tl"></span><span class="ta"><button type="button" data-a="up" aria-label="Subir ficha">↑</button><button type="button" data-a="dn" aria-label="Bajar ficha">↓</button></span><button type="button" data-a="min"></button><span class="ta"><button type="button" data-a="x" aria-label="Ocultar ficha">×</button></span>';return d}
+  function sync(c){let tb=c.querySelector(":scope>.tb");if(!tb){tb=mkTb();c.prepend(tb)}
+    const t=title(c),mn=L.min.includes(c.id);tb.querySelector(".tl").textContent=t;
+    const b=tb.querySelector('[data-a=min]');b.textContent=mn?"+":"−";b.setAttribute("aria-label",(mn?"Desplegar ":"Minimizar ")+t);
+    tb.querySelector('[data-a=up]').setAttribute("aria-label","Subir "+t);tb.querySelector('[data-a=dn]').setAttribute("aria-label","Bajar "+t);tb.querySelector('[data-a=x]').setAttribute("aria-label","Ocultar "+t)}
+  function state(){cards.forEach(c=>{c.classList.toggle("gone",L.hidden.includes(c.id));c.classList.toggle("min",L.min.includes(c.id));sync(c)});chips()}
+  function chips(){const h=cards.filter(c=>L.hidden.includes(c.id));
+    $("orgHid").innerHTML=h.length?h.map(c=>`<button type="button" data-show="${c.id}">+ ${esc(title(c))}</button>`).join(""):'<span class="sub">No hay fichas ocultas.</span>';
+    $("orgBtn").textContent=h.length?`Organizar · ${h.length} ocultas`:"Organizar"}
+  const redraw=()=>{try{paintAn()}catch(e){}};
+  function order(){const ids=L.order.filter(i=>cards.some(c=>c.id===i));const rest=orig.filter(c=>!ids.includes(c.id)).map(c=>c.id);
+    place([...ids,...rest].map(i=>cards.find(c=>c.id===i)))}
+  function move(c,d){const list=cur();let i=list.indexOf(c),j=i+d;while(list[j]&&L.hidden.includes(list[j].id))j+=d;if(!list[j])return;
+    list.splice(i,1);list.splice(j,0,c);place(list);L.order=list.map(x=>x.id);save();redraw()}
+  grid.addEventListener("click",ev=>{const b=ev.target.closest(".tb button");if(!b)return;const c=b.closest(".card"),a=b.dataset.a,id=c.id;
+    if(a==="up"||a==="dn"){move(c,a==="up"?-1:1);const nb=c.querySelector(`.tb [data-a=${a}]`);if(nb)nb.focus();return}
+    if(a==="min"){L.min=L.min.includes(id)?L.min.filter(x=>x!==id):[...L.min,id];save();state();redraw();return}
+    if(a==="x"){if(!L.hidden.includes(id))L.hidden.push(id);save();state()}});
+  $("orgHid").addEventListener("click",ev=>{const b=ev.target.closest("[data-show]");if(!b)return;L.hidden=L.hidden.filter(x=>x!==b.dataset.show);save();state();redraw()});
+  $("orgAll").onclick=()=>{L.hidden=[];L.min=[];save();state();redraw()};
+  $("orgReset").onclick=()=>{L={order:[],hidden:[],min:[]};save();place(orig);state();redraw()};
+  const setOrg=on=>{document.body.classList.toggle("org",on);$("orgBar").hidden=!on;$("orgBtn").setAttribute("aria-pressed",on)};
+  $("orgBtn").onclick=()=>setOrg(!document.body.classList.contains("org"));
+  $("orgDone").onclick=()=>setOrg(false);
+  cards.forEach(c=>new MutationObserver(()=>{if(!c.querySelector(":scope>.tb")||c.querySelector(".tb .tl").textContent!==title(c))sync(c)}).observe(c,{childList:true}));
+  order();state();redraw();
+})();
+
 </script>
 </body>
 </html>
