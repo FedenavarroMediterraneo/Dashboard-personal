@@ -273,6 +273,7 @@ body:not(.org) .tb .ta{display:none}
   </section>
   <section class="card c4" id="cRank"><h2>Ranking de amigos</h2><div class="sub" id="rankMonth" style="margin:-6px 0 8px"></div>
     <ul class="rank" id="rank"></ul><div class="sub" id="rankGap"></div><div class="bar"><i id="rankBar"></i></div>
+    <div class="runst"><span class="sub" id="rkSt" role="status"></span><button class="mini" id="rkSync" type="button">Sincronizar</button></div>
   </section>
 <section class="card c4 full" id="addKm"><h2>Añadir kilómetros</h2>
     <div class="form"><label>Amigo<select id="fN"></select></label><label>Fecha<input type="date" id="fD"></label><label>Kilómetros<input type="number" id="fK" step="0.1" min="0" inputmode="decimal" placeholder="0,0"></label><button class="btn" id="fAdd">Guardar</button></div>
@@ -478,7 +479,9 @@ function render(){
   $("chips").innerHTML=A.map(n=>`<span>${esc(n)}<button data-n="${esc(n)}" aria-label="Quitar a ${esc(n)}">&times;</button></span>`).join("")||'<span class="sub">Sin amigos todavía.</span>';
   $("log").innerHTML=E.filter(e=>A.includes(e.n)).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,8).map(e=>`<li><span>${esc(e.n)} · ${new Date(e.d+"T00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})} · ${fmt(e.km,1)} km</span><button data-id="${esc(e.id)}">Borrar</button></li>`).join("")||'<li class="sub">Aún no hay kilómetros guardados.</li>';
 }
-let remote=false,lastSync=0;
+let remote=false,lastSync=0,lastTry=0,syncing=false;
+const hhmm=()=>new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+const rkSt=t=>{const e=$("rkSt");if(e)e.textContent=t};
 async function fcall(body){
   const res=await fetch(API_BASE+"/.netlify/functions/friends",{method:body?"POST":"GET",headers:{"x-dash-key":sget(SK)||"",...(body?{"content-type":"application/json"}:{})},body:body?JSON.stringify(body):undefined});
   let d=null;try{d=await res.json()}catch(e){}
@@ -489,6 +492,10 @@ const localFriends=()=>ls("amigos")||[...DATA.amigos];
 function setRole(r){document.body.classList.toggle("viewer",r==="view");sset("dashRole",r||"")}
 if(sget("dashRole")==="view")document.body.classList.add("viewer");
 async function load(){
+  if(syncing)return;syncing=true;lastTry=Date.now();const bt=$("rkSync");if(bt){bt.disabled=true;bt.textContent="Sincronizando…"}
+  try{await load0()}finally{syncing=false;if(bt){bt.disabled=false;bt.textContent="Sincronizar"}}
+}
+async function load0(){
   const loc={E:ls("km")||[],A:localFriends()};
   if(sget(SK)){
     try{
@@ -504,16 +511,21 @@ async function load(){
       }catch(x){}
       setRole(d.role);
       E=d.entries;A=d.friends||[...DATA.amigos];remote=true;lastSync=Date.now();
-      msg("Sincronizado con la nube.");render();return;
-    }catch(e){remote=false;msg(e.code==="key"?"La clave no es correcta. Los kilómetros se guardan solo en este navegador.":"Sin conexión con el servidor. Los kilómetros se guardan solo en este navegador.")}
-  }else{remote=false;msg("Solo en este navegador. Pon tu clave en la tarjeta Running para sincronizar.")}
+      msg("Sincronizado con la nube.");rkSt("Sincronizado a las "+hhmm()+".");render();return;
+    }catch(e){remote=false;const t=e.code==="key"?"La clave no es correcta. Los kilómetros se guardan solo en este navegador.":"Sin conexión con el servidor. Los kilómetros se guardan solo en este navegador.";msg(t);rkSt(e.code==="key"?"Sin sincronizar: la clave no es correcta en este dispositivo.":"Sin sincronizar: sin conexión con el servidor. Se reintentará.")}
+  }else{remote=false;msg("Solo en este navegador. Pon tu clave en la tarjeta Running para sincronizar.");rkSt("Sin sincronizar: falta la clave en este dispositivo.")}
   E=loc.E;A=loc.A;render();
 }
 async function saveA(){try{if(remote)await fcall({action:"friends",list:A});else ls("amigos",A)}catch(x){msg("No se pudo guardar la lista de amigos.")}}
-async function add(n,d,km){const e={n,d,km};try{if(remote)e.id=(await fcall({action:"add",entry:e})).entry.id;else{e.id=""+Date.now();ls("km",[...E,e])}E.push(e);msg("Guardado: "+n+", "+fmt(km,1)+" km.")}catch(x){msg("No se pudo guardar. Inténtalo de nuevo.")}render()}
+async function add(n,d,km){const e={n,d,km};try{if(remote)e.id=(await fcall({action:"add",entry:e})).entry.id;else{e.id=""+Date.now();ls("km",[...E,e])}E.push(e);msg(remote?"Guardado: "+n+", "+fmt(km,1)+" km.":"Guardado solo en este dispositivo: "+n+", "+fmt(km,1)+" km. No se verá en los demás hasta que sincronice.")}catch(x){msg("No se pudo guardar. Inténtalo de nuevo.")}render()}
 async function del(id){try{if(remote)await fcall({action:"del",id});E=E.filter(e=>e.id!==id);if(!remote)ls("km",E);msg("Borrado.")}catch(x){msg("No se pudo borrar.")}render()}
 // Al volver a la pestaña se recarga, por si has añadido kilómetros desde otro dispositivo.
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&remote&&Date.now()-lastSync>60000)load()});
+// También se reintenta tras un fallo, al volver a la app, al recuperar la red y cada 90 s mientras está abierta.
+const resync=(min)=>{if(!document.hidden&&sget(SK)&&Date.now()-lastTry>min)load()};
+document.addEventListener("visibilitychange",()=>resync(20000));
+addEventListener("focus",()=>resync(20000));addEventListener("pageshow",()=>resync(20000));addEventListener("online",()=>resync(0));
+setInterval(()=>resync(85000),30000);
+$("rkSync").onclick=()=>{if(sget(SK))load();else{rkSt("Sin sincronizar: falta la clave en este dispositivo.");$("keyF").hidden=false}};
 $("fD").value=new Date(now-now.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 $("fAdd").onclick=()=>{const km=parseFloat($("fK").value);if(!$("fN").value){msg("Añade primero un amigo.");return}if(!(km>0)){msg("Introduce los kilómetros.");return}if(!$("fD").value){msg("Elige la fecha.");return}add($("fN").value,$("fD").value,km);$("fK").value=""};
 $("log").onclick=ev=>{const b=ev.target.closest("button");if(b)del(b.dataset.id)};
