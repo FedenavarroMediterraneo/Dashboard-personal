@@ -246,6 +246,18 @@ body:not(.org) .tb .ta{display:none}
 .otbl th:not(:first-child),.otbl td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
 .otbl td b{font-weight:700}
 .otbl .oe{display:inline-block;width:1.6em;text-align:center}
+.yg{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:16px 16px}
+.mh{font-weight:600;font-size:.875rem;margin-bottom:4px}
+.mw,.md{display:grid;grid-template-columns:repeat(7,1fr)}
+.mw span{font-size:.625rem;color:var(--mute);text-align:center;padding-bottom:2px}
+.dy{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:26px;padding-top:2px;border-radius:6px}
+.dy i{font-style:normal;font-size:.625rem;line-height:1.1;color:var(--mute);font-variant-numeric:tabular-nums}
+.dy b{display:flex;gap:2px;height:6px;margin-top:2px}
+.dy u,.ylg u{display:inline-block;width:5px;height:5px;border-radius:50%;text-decoration:none}
+.dy.fu i{opacity:.45}
+.dy.td{outline:1.5px solid var(--ink);outline-offset:-1px}
+.dy.td i{color:var(--ink);font-weight:700}
+.ylg{gap:6px 14px}.ylg span{display:inline-flex;align-items:center;gap:5px}.ylg u{width:8px;height:8px}
 .heat .od{fill:var(--card);stroke:var(--ink);stroke-width:1.2;pointer-events:none}
 .lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.75rem;color:var(--mute);margin-top:8px}
 .lg .sw{display:inline-block;width:1.25rem;height:0;border-top:3px solid var(--prog);vertical-align:middle;margin-right:6px;border-radius:2px}
@@ -618,26 +630,37 @@ function anPrs(d){
   $("anPrs").innerHTML=`<h2>Mejores marcas</h2>${rows?`<table class="tbl"><thead><tr><th scope="col">Distancia</th><th scope="col">Tiempo</th><th scope="col">Ritmo</th><th scope="col">Fecha</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub">'+(p.pending===0&&p.total>0?'Strava no ha devuelto mejores marcas en tus carreras (suele pasar con actividades sin GPS detallado).':'Todavía no hay marcas calculadas.')+'</div>'}
     ${p.pending>0?`<div class="pend" role="status">Analizando tu historial: ${p.scanned} de ${p.total} carreras. Se completa solo en las próximas visitas.${why(p)}</div>`:""}`;
 }
+let calY=y;
+const KCOL={run:"#e03a2f",walk:"#f28a1d",yoga:"#2f4fb8",gym:"#5bb8f0",bike:"#f2c200",padel:"#2f9e44",pickle:"#9bdc9f",other:"#8a94a6"};
+const KORD=["run","walk","yoga","gym","bike","padel","pickle","other"],KNAME={run:"Correr",walk:"Andar",yoga:"Pilates",gym:"Fuerza",bike:"Bici",padel:"Pádel",pickle:"Pickleball",other:"Otros"};
+const MESF=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 function anCal(d){
-  const CS=13,today0=new Date(y,m,now.getDate()),tn=Math.round(Date.UTC(y,m,now.getDate())/864e5),dow=(today0.getDay()+6)%7,start=tn-dow-52*7;
-  let cells="",mlab="",lastM=-1,n=0,tot=0,kmT=0,nO=0;
-  for(let w=0;w<53;w++){
-    for(let k=0;k<7;k++){
-      const dn=start+w*7+k;if(dn>tn)continue;
-      const ds=new Date(dn*864e5).toISOString().slice(0,10),km=d.days[ds]||0,lv=km<=0?0:km<5?1:km<10?2:km<15?3:4,oc=(d.oth&&d.oth.cal&&d.oth.cal[ds])||[];
-      if(km>0){n++;kmT+=km}
-      if(k===0){const mo=+ds.slice(5,7)-1;if(mo!==lastM&&w<51){mlab+=`<text x="${28+w*CS}" y="10">${MES[mo]}</text>`}lastM=mo}
-      cells+=`<rect class="l${lv}${dn===tn?" tdy":""}" x="${28+w*CS}" y="${18+k*CS}" width="11" height="11"><title>${dshort(ds)}: ${km>0?fmt(km,1)+" km":"sin carrera"}${oc.length?" · "+oc.map(c=>OCAT[c]||c).join(", "):""}</title></rect>`;
-      if(oc.length){nO++;cells+=`<circle class="od" cx="${28+w*CS+5.5}" cy="${18+k*CS+5.5}" r="2.3"/>`}
+  const hp=(d.monthsPrev||[]).some(v=>v>0),minY=hp?y-1:y;if(calY<minY)calY=minY;if(calY>y)calY=y;
+  const oc=(d.oth&&d.oth.cal)||{},p2=n=>String(n).padStart(2,"0");let tot=0,months="";
+  for(let mo=0;mo<12;mo++){
+    const first=(new Date(calY,mo,1).getDay()+6)%7,nd=new Date(calY,mo+1,0).getDate();let cells="",nAct=0;
+    for(let k=0;k<first;k++)cells+="<span></span>";
+    for(let dd=1;dd<=nd;dd++){
+      const ds=`${calY}-${p2(mo+1)}-${p2(dd)}`,ks=[];
+      if((d.days[ds]||0)>0)ks.push("run");
+      for(const c of KORD)if(c!=="run"&&(oc[ds]||[]).includes(c))ks.push(c);
+      for(const c of(oc[ds]||[]))if(!KORD.includes(c)&&!ks.includes("other"))ks.push("other");
+      const fut=calY===y&&(mo>m||(mo===m&&dd>now.getDate())),isT=calY===y&&mo===m&&dd===now.getDate();
+      if(ks.length){nAct++}
+      const lab=ks.length?`${dd} de ${MESF[mo].toLowerCase()}: ${ks.map(c=>KNAME[c]).join(", ")}`:"";
+      cells+=`<span class="dy${fut?" fu":""}${isT?" td":""}"${lab?` title="${lab}" aria-label="${lab}"`:""}><i>${dd}</i><b>${ks.slice(0,4).map(c=>`<u style="background:${KCOL[c]}"></u>`).join("")}</b></span>`;
     }
+    tot+=nAct;
+    months+=`<div class="mo"><div class="mh">${MESF[mo]}</div><div class="mw" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="md">${cells}</div></div>`;
   }
-  $("anCal").innerHTML=`<h2>Calendario de actividad</h2><div class="sub">${n} días corridos en los últimos 12 meses, ${fmt(kmT)} km</div>
-    <div class="scr" tabindex="0" role="region" aria-label="Calendario de actividad, se desplaza horizontalmente"><svg class="svgc heat" viewBox="0 0 ${28+53*CS} ${18+7*CS}" role="img" aria-label="Mapa de calor de carreras: ${n} días con carrera en los últimos 12 meses, ${fmt(kmT)} kilómetros en total. Cuanto más oscuro, más kilómetros ese día.">
-      ${mlab}<text x="0" y="${18+0*CS+9}">Lun</text><text x="0" y="${18+2*CS+9}">Mié</text><text x="0" y="${18+4*CS+9}">Vie</text>${cells}</svg></div>
-    <div class="lg"><span>Menos <span class="scale" aria-hidden="true"><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span> Más</span><span>Sin carrera · menos de 5 km · 5 a 10 km · 10 a 15 km · más de 15 km</span>${d.oth?`<span><svg width="10" height="10" aria-hidden="true" style="vertical-align:-1px"><circle cx="5" cy="5" r="3.2" style="fill:var(--card);stroke:var(--ink);stroke-width:1.3"/></svg> Otra actividad (${nO} días)</span>`:""}</div>
+  const lg=KORD.filter(c=>c!=="other").map(c=>`<span><u style="background:${KCOL[c]}"></u>${KNAME[c]}</span>`).join("");
+  $("anCal").innerHTML=`<h2>Calendario de actividad</h2>
+    <div class="calnav"><button type="button" id="ycPrev" aria-label="Año anterior"${calY<=minY?" disabled":""}>‹</button><button type="button" class="ttl" id="ycTitle" aria-label="Volver al año actual">${calY} · ${tot} días con actividad</button><button type="button" id="ycNext" aria-label="Año siguiente"${calY>=y?" disabled":""}>›</button></div>
+    <div class="yg">${months}</div>
+    <div class="lg ylg">${lg}<span>Un punto por actividad</span></div>
     <div class="sub" style="margin-top:16px">Kilómetros por día de la semana (${y})</div>
     <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem;max-width:28rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)),["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"])}</div>`;
-  const sc=$("anCal").querySelector(".scr");if(sc)sc.scrollLeft=sc.scrollWidth;
+  $("ycPrev").onclick=()=>{calY--;anCal(d)};$("ycNext").onclick=()=>{calY++;anCal(d)};$("ycTitle").onclick=()=>{calY=y;anCal(d)};
   const DN=["lunes","martes","miércoles","jueves","viernes","sábado","domingo"],mxi=d.weekdays.indexOf(Math.max(...d.weekdays));
   img("wdChart","Kilómetros por día de la semana este año: "+DN.map((n,i)=>`${n} ${fmt(d.weekdays[i])}`).join(", ")+`. El día más activo es ${DN[mxi]}.`);
 }
