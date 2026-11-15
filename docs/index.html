@@ -480,10 +480,10 @@ let rv={y,m};
 function render(){
   const prev={};[...$("rank").children].forEach(li=>{prev[li.dataset.n]=li.getBoundingClientRect().top});
   const vym=rv.y+"-"+String(rv.m+1).padStart(2,"0"),cur=rv.y===y&&rv.m===m;
-  const mine=rv.y===y?r.months[rv.m]:rv.y===y-1?(r.monthsPrev||[])[rv.m]:0;
+  const hp=(r.monthsPrev||[]).some(v=>v>0),mine=rv.y===y?r.months[rv.m]:rv.y===y-1?(r.monthsPrev||[])[rv.m]:0;
   const fr=[...A.map(n=>({n,km:E.filter(e=>e.n===n&&e.d.startsWith(vym)).reduce((a,e)=>a+e.km,0)})),{n:DATA.name,km:mine||0,me:true}].sort((a,b)=>b.km-a.km);
   $("rankMonth").textContent=new Date(rv.y,rv.m,1).toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-  $("rkNext").disabled=cur;$("rkPrev").disabled=rv.y===y-1&&rv.m===0;
+  $("rkNext").disabled=cur;$("rkPrev").disabled=hp?(rv.y===y-1&&rv.m===0):(rv.y===y&&rv.m===0);
   $("rankBar").parentElement.style.display=cur?"":"none";
   $("rank").innerHTML=fr.map((f,i)=>`<li data-n="${esc(f.n)}" class="${f.me?"me":""}"><span><em>${["🥇","🥈","🥉"][i]||i+1}</em>${esc(f.n)}</span><span>${fmt(f.km,1)} km</span></li>`).join("");
   flip($("rank"),prev);
@@ -658,13 +658,13 @@ function anProj(d){
   const projA=left>0?d.year+d.km84/84*left:d.year;
   const needed=GOAL_YEAR*doy/(y%4===0?366:365),diff=d.year-needed;
   const cum=a=>{let t=0;return a.map(v=>t+=v)};
-  const cT=cum(d.months).slice(0,m+1),cP=cum(d.monthsPrev);
-  const W=cw("anProj"),nar=W<420,H=190,L=40,R=nar?58:104,T=12,B=22,ymax=Math.max(projA,cP[11],GOAL_YEAR,1)*1.05;
+  const cT=cum(d.months).slice(0,m+1),cP=cum(d.monthsPrev),hp=(d.monthsPrev||[]).some(v=>v>0);
+  const W=cw("anProj"),nar=W<420,H=190,L=40,R=nar?58:104,T=12,B=22,ymax=Math.max(projA,hp?cP[11]:0,GOAL_YEAR,1)*1.05;
   const X=i=>L+i*(W-L-R)/11,Y=v=>T+(1-v/ymax)*(H-T-B);
   const P=a=>a.map((v,i)=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ");
   const proj=[[m,d.year],[11,projA]].map(([i,v])=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ");
   const lab=(txt,yy,cls)=>`<text class="${cls||""}" x="${W-R+6}" y="${yy.toFixed(1)}">${txt}</text>`;
-  const labs=[{t:nar?fmt(Math.round(projA)):`Previsión ${fmt(Math.round(projA))}`,y:Y(projA)+4,c:"tx"},{t:nar?fmt(Math.round(cP[11])):`${y-1}: ${fmt(Math.round(cP[11]))}`,y:Y(cP[11])+4},{t:nar?fmt(GOAL_YEAR):"Objetivo "+fmt(GOAL_YEAR),y:Y(GOAL_YEAR)+4}].sort((a,b)=>a.y-b.y);
+  const labs=[{t:nar?fmt(Math.round(projA)):`Previsión ${fmt(Math.round(projA))}`,y:Y(projA)+4,c:"tx"},...(hp?[{t:nar?fmt(Math.round(cP[11])):`${y-1}: ${fmt(Math.round(cP[11]))}`,y:Y(cP[11])+4}]:[]),{t:nar?fmt(GOAL_YEAR):"Objetivo "+fmt(GOAL_YEAR),y:Y(GOAL_YEAR)+4}].sort((a,b)=>a.y-b.y);
   for(let i=1;i<labs.length;i++)if(labs[i].y-labs[i-1].y<14)labs[i].y=labs[i-1].y+14;
   const grid=[0,.5,1].map(f=>{const v=ymax/1.05*f,yy=Y(v);return`<line class="gl" x1="${L}" x2="${W-R}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text x="${L-6}" y="${(yy+4).toFixed(1)}" text-anchor="end">${fmt(Math.round(v/10)*10)}</text>`}).join("");
   const goalY=Y(GOAL_YEAR);
@@ -673,14 +673,14 @@ function anProj(d){
     <div><b class="big2">${fmt(d.year)} <small>km</small></b><span class="sub">llevas este año${GOAL_YEAR?`, de ${fmt(GOAL_YEAR)} de objetivo`:""}</span></div></div>
     <div class="bar"><i id="projBar"></i></div>
     <div class="sub">${diff>=0?`Vas ${fmt(Math.round(diff))} km por delante del ritmo para llegar a ${fmt(GOAL_YEAR)} km.`:`Vas ${fmt(Math.round(-diff))} km por detrás del ritmo para llegar a ${fmt(GOAL_YEAR)} km.`}</div>
-    <svg class="svgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Kilómetros acumulados: este año ${fmt(d.year)}, proyección a diciembre ${fmt(Math.round(projA))}, año anterior ${fmt(Math.round(cP[11]))} en total.">
+    <svg class="svgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Kilómetros acumulados: este año ${fmt(d.year)}, proyección a diciembre ${fmt(Math.round(projA))}${hp?", año anterior "+fmt(Math.round(cP[11]))+" en total":""}.">
       ${grid}<line class="gl" x1="${L}" x2="${W-R}" y1="${goalY.toFixed(1)}" y2="${goalY.toFixed(1)}" style="stroke:var(--mute)"/>
-      <polyline class="ln pv" points="${P(cP)}"/><polyline class="ln pj" points="${proj}"/><polyline class="ln" points="${P(cT)}"/>
+      ${hp?`<polyline class="ln pv" points="${P(cP)}"/>`:""}<polyline class="ln pj" points="${proj}"/><polyline class="ln" points="${P(cT)}"/>
       ${cT.map((v,i)=>`<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.5"><title>${MESL[i]}: ${fmt(Math.round(v))} km acumulados (${y})</title></circle>`).join("")}
-      ${cP.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="7" fill="transparent"><title>${MESL[i]}: ${fmt(Math.round(v))} km acumulados (${y-1})</title></circle>`).join("")}
+      ${hp?cP.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="7" fill="transparent"><title>${MESL[i]}: ${fmt(Math.round(v))} km acumulados (${y-1})</title></circle>`).join(""):""}
       ${labs.map(l=>lab(l.t,l.y,l.c)).join("")}
       ${MES.map((n,i)=>nar&&i%2?"":`<text x="${X(i).toFixed(1)}" y="${H-4}" text-anchor="middle">${n}</text>`).join("")}</svg>
-    <div class="lg"><span><i class="sw"></i>${y}</span><span><i class="sw pj"></i>Previsión</span><span><i class="sw pv"></i>${y-1}</span>${nar?`<span>Cifras a la derecha: previsión, ${y-1} y objetivo</span>`:""}</div>`;
+    <div class="lg"><span><i class="sw"></i>${y}</span><span><i class="sw pj"></i>Previsión</span>${hp?`<span><i class="sw pv"></i>${y-1}</span>`:""}${nar?`<span>Cifras a la derecha: previsión${hp?`, ${y-1}`:""} y objetivo</span>`:""}</div>`;
   pb("projBar",Math.min(100,d.year/GOAL_YEAR*100),"Progreso hacia el objetivo anual de kilómetros");
 }
 const OCAT={run:"Correr",walk:"Andar",yoga:"Pilates",gym:"Fuerza",bike:"Bici",padel:"Pádel",pickle:"Pickleball",other:"Otros"};
