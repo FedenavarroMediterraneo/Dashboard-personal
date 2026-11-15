@@ -690,11 +690,11 @@ function anOth(d){
   if(!o){el.innerHTML='<h2>Otras actividades</h2><div class="sub">El resumen por deporte aparecerá tras la próxima actualización del servidor.</div>';return}
   const sum=b=>Object.values(b||{}).reduce((a,v)=>({n:a.n+v.n,s:a.s+v.s}),{n:0,s:0});
   const mo=sum(o.month),yr=sum(o.year),al=o.all||{};
-  const rows=Object.keys(OCAT).filter(c=>c!=="other"||(al.other||{}).n).map(c=>{const g=k=>((o[k]||{})[c]||{}).n||0;return `<tr><td><span class="oe" aria-hidden="true">${OEMO[c]}</span> ${OCAT[c]}</td><td><b>${g("all")}</b></td><td><b>${g("month")}</b></td><td><b>${g("year")}</b></td></tr>`}).join("");
+  const rows=Object.keys(OCAT).filter(c=>c!=="other"||(al.other||{}).n).map(c=>{const g=k=>((o[k]||{})[c]||{}).n||0;return `<tr><td><span class="oe" aria-hidden="true">${OEMO[c]}</span> ${OCAT[c]}</td><td><b>${g("month")}</b></td><td><b>${g("year")}</b></td><td><b>${g("all")}</b></td></tr>`}).join("");
   el.innerHTML=`<h2>Otras actividades</h2>
     <div class="ost"><div><b>${mo.n}</b><span>${mo.n===1?"sesión":"sesiones"} este mes</span></div><div><b>${yr.n}</b><span>${yr.n===1?"sesión":"sesiones"} este año</span></div>
     <div><b>${fmt(mo.s/3600,1)} h</b><span>de actividad este mes</span></div><div><b>${fmt(yr.s/3600,1)} h</b><span>de actividad este año</span></div></div>
-    <table class="tbl otbl"><thead><tr><th scope="col">Tipo</th><th scope="col">Total</th><th scope="col">Mes</th><th scope="col">Año</th></tr></thead><tbody>${rows}</tbody></table>`;
+    <table class="tbl otbl"><thead><tr><th scope="col">Tipo</th><th scope="col">Mes</th><th scope="col">Año</th><th scope="col">Total</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function anShoes(d){
   const g=d.gear||[];
