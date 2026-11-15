@@ -171,20 +171,25 @@ await t('catOf: caminata, yoga, gimnasio, bici y otros', async () => {
   for (const t of ['Ride', 'VirtualRide', 'MountainBikeRide', 'GravelRide', 'EBikeRide']) assert.equal(catOf(t), 'bike');
   assert.equal(catOf('Swim'), 'other'); assert.equal(catOf(undefined), 'other');
 });
-await t('summarizeOthers: mes, año y categorías por día', async () => {
+await t('catOf: pádel y pickleball', async () => { assert.equal(catOf('Padel'), 'padel'); assert.equal(catOf('Pickleball'), 'pickle'); });
+await t('summarizeOthers: mes, año, total, carreras y categorías por día', async () => {
   const o = [
     { id: 1, d: '2026-10-14T08:00:00Z', c: 'walk', s: 1800 }, { id: 2, d: '2026-10-14T19:00:00Z', c: 'gym', s: 3000 },
     { id: 3, d: '2026-10-19T08:00:00Z', c: 'gym', s: 2400 }, { id: 4, d: '2026-09-30T08:00:00Z', c: 'bike', s: 3600 },
     { id: 5, d: '2025-01-05T08:00:00Z', c: 'walk', s: 999 }, { id: 6, d: 'mal', c: 'walk', s: 5 },
     { id: 7, d: '2026-10-15T08:00:00Z', s: 60 },
   ];
-  const r = summarizeOthers(o, { y: 2026, m: 10, d: 19 });
+  const runs = [{ d: '2026-10-10T07:00:00Z', t: 3000 }, { d: '2026-03-01T07:00:00Z', t: 2000 }, { d: '2024-05-01T07:00:00Z', t: 1000 }];
+  const r = summarizeOthers(o, { y: 2026, m: 10, d: 19 }, runs);
   assert.deepEqual(r.month.gym, { n: 2, s: 5400 });
-  assert.deepEqual(r.month.walk, { n: 1, s: 1800 });
+  assert.deepEqual(r.month.run, { n: 1, s: 3000 });
+  assert.deepEqual(r.year.run, { n: 2, s: 5000 });
+  assert.deepEqual(r.all.run, { n: 3, s: 6000 });
+  assert.deepEqual(r.all.walk, { n: 2, s: 2799 });
   assert.deepEqual(r.month.other, { n: 1, s: 60 });
   assert.deepEqual(r.year.bike, { n: 1, s: 3600 });
-  assert.equal(r.year.walk.n, 1);
   assert.deepEqual(r.cal['2026-10-14'].sort(), ['gym', 'walk']);
+  assert.equal(r.cal['2026-10-10'], undefined);
   assert.equal(r.cal['2025-01-05'], undefined);
 });
 await t('syncRuns: guarda categoría y duración y rehace todo si el guardado es de la versión antigua', async () => {

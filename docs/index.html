@@ -238,6 +238,14 @@ body:not(.org) .tb .ta{display:none}
 .scale{display:inline-flex;align-items:center;gap:3px;vertical-align:middle}
 .scale i{width:.75rem;height:.75rem;border-radius:3px;display:inline-block}
 .scale .l0{background:var(--track)}.scale .l1{background:color-mix(in srgb,var(--prog) 28%,var(--card))}.scale .l2{background:color-mix(in srgb,var(--prog) 50%,var(--card))}.scale .l3{background:color-mix(in srgb,var(--prog) 75%,var(--card))}.scale .l4{background:var(--prog)}
+.ost{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;margin:2px 0 16px;padding-bottom:14px;border-bottom:1px solid var(--line,var(--track))}
+.ost div{display:flex;flex-direction:column;gap:2px}
+.ost b{font-size:1.5rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.ost span{font-size:.8125rem;color:var(--mute)}
+.otbl td,.otbl th{padding:8px 4px}
+.otbl th:not(:first-child),.otbl td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.otbl td b{font-weight:700}
+.otbl .oe{display:inline-block;width:1.6em;text-align:center}
 .heat .od{fill:var(--card);stroke:var(--ink);stroke-width:1.2;pointer-events:none}
 .lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.75rem;color:var(--mute);margin-top:8px}
 .lg .sw{display:inline-block;width:1.25rem;height:0;border-top:3px solid var(--prog);vertical-align:middle;margin-right:6px;border-radius:2px}
@@ -675,16 +683,18 @@ function anProj(d){
     <div class="lg"><span><i class="sw"></i>${y}</span><span><i class="sw pj"></i>Previsión</span><span><i class="sw pv"></i>${y-1}</span>${nar?`<span>Cifras a la derecha: previsión, ${y-1} y objetivo</span>`:""}</div>`;
   pb("projBar",Math.min(100,d.year/GOAL_YEAR*100),"Progreso hacia el objetivo anual de kilómetros");
 }
-const OCAT={walk:"Caminata",yoga:"Pilates / yoga",gym:"Gimnasio / funcional",bike:"Bicicleta",other:"Otros"};
+const OCAT={run:"Correr",walk:"Andar",yoga:"Pilates",gym:"Fuerza",bike:"Bici",padel:"Pádel",pickle:"Pickleball",other:"Otros"};
+const OEMO={run:"🏃🏻‍♂️",walk:"🚶🏻‍♂️",yoga:"🧘🏻‍♂️",gym:"🏋🏻",bike:"🚴🏻",padel:"🎾",pickle:"🏸",other:"🏅"};
 function anOth(d){
   const o=d.oth,el=$("anOth");
-  if(!o){el.innerHTML='<h2>Otras actividades</h2><div class="sub">Caminatas, pilates, gimnasio y bicicleta aparecerán aquí tras la próxima actualización del servidor.</div>';return}
-  const sum=b=>Object.values(b).reduce((a,v)=>({n:a.n+v.n,s:a.s+v.s}),{n:0,s:0});
-  const mo=sum(o.month),yr=sum(o.year);
-  const rows=Object.keys(OCAT).filter(c=>(o.year[c]||{}).n).map(c=>{const a=o.month[c]||{n:0,s:0},b=o.year[c];return `<tr><td>${OCAT[c]}</td><td>${a.n?a.n+" · "+dur(a.s):"–"}</td><td>${b.n} · ${dur(b.s)}</td></tr>`}).join("");
+  if(!o){el.innerHTML='<h2>Otras actividades</h2><div class="sub">El resumen por deporte aparecerá tras la próxima actualización del servidor.</div>';return}
+  const sum=b=>Object.values(b||{}).reduce((a,v)=>({n:a.n+v.n,s:a.s+v.s}),{n:0,s:0});
+  const mo=sum(o.month),yr=sum(o.year),al=o.all||{};
+  const rows=Object.keys(OCAT).filter(c=>c!=="other"||(al.other||{}).n).map(c=>{const g=k=>((o[k]||{})[c]||{}).n||0;return `<tr><td><span class="oe" aria-hidden="true">${OEMO[c]}</span> ${OCAT[c]}</td><td><b>${g("all")}</b></td><td><b>${g("month")}</b></td><td><b>${g("year")}</b></td></tr>`}).join("");
   el.innerHTML=`<h2>Otras actividades</h2>
-    <div class="big">${mo.n} <small>${mo.n===1?"sesión":"sesiones"}</small></div><div class="sub">${mo.n?dur(mo.s)+" este mes":"este mes"} · ${yr.n} este año${yr.n?" ("+dur(yr.s)+")":""}</div>
-    ${rows?`<table class="tbl" style="margin-top:12px"><thead><tr><th scope="col">Tipo</th><th scope="col">Mes</th><th scope="col">Año</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub" style="margin-top:12px">Aún no hay otras actividades este año.</div>'}`;
+    <div class="ost"><div><b>${mo.n}</b><span>${mo.n===1?"sesión":"sesiones"} este mes</span></div><div><b>${yr.n}</b><span>${yr.n===1?"sesión":"sesiones"} este año</span></div>
+    <div><b>${fmt(mo.s/3600,1)} h</b><span>de actividad este mes</span></div><div><b>${fmt(yr.s/3600,1)} h</b><span>de actividad este año</span></div></div>
+    <table class="tbl otbl"><thead><tr><th scope="col">Tipo</th><th scope="col">Total</th><th scope="col">Mes</th><th scope="col">Año</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function anShoes(d){
   const g=d.gear||[];
