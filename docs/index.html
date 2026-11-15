@@ -256,10 +256,11 @@ body:not(.org) .tb .ta{display:none}
 .dy u,.ylg u{display:inline-block;width:5px;height:5px;border-radius:50%;text-decoration:none}
 .mbig{max-width:36rem;margin:0 auto}
 .mbig .md,.mbig .mw{gap:3px}
-.mbig .dy{position:relative;height:28px;min-height:0;padding:0;border-radius:7px;background:var(--track)}
-.mbig .dy i{position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:.5625rem}
-.mbig .dy b{position:absolute;inset:0;display:block;margin:0;height:auto}
-.mbig .dy u{position:absolute;width:11px;height:11px;transform:translate(-50%,-50%);box-shadow:0 0 0 1.5px var(--track)}
+.mbig .dy{position:relative;height:28px;min-height:0;padding:0;border-radius:7px;background:var(--track);container-type:inline-size}
+.mbig .dy i{position:absolute;left:4px;top:2px;font-size:.5rem;line-height:1}
+.mbig .dy.k3 i,.mbig .dy.k4 i{display:none}
+.mbig .dy b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:2px;margin:0;height:auto}
+.mbig .dy u{flex:0 0 auto;width:min(22px,calc((100cqw - 10px)/var(--n)));height:min(22px,calc((100cqw - 10px)/var(--n)));box-shadow:none}
 .dy.fu i{opacity:.45}
 .dy.td{outline:1.5px solid var(--ink);outline-offset:-1px}
 .dy.td i{color:var(--ink);font-weight:700}
@@ -653,7 +654,7 @@ function anCal(d){
     const fut=calY===y&&(calM>m||(calM===m&&dd>now.getDate())),isT=calY===y&&calM===m&&dd===now.getDate();
     if(ks.length)tot++;
     const lab=ks.length?`${dd} de ${MESF[calM].toLowerCase()}: ${ks.map(c=>KNAME[c]).join(", ")}`:"";
-    cells+=`<span class="dy${fut?" fu":""}${isT?" td":""}"${lab?` title="${lab}" aria-label="${lab}"`:""}><i>${dd}</i><b>${ks.slice(0,4).map((c,i)=>{const P=[[[0,0]],[[-4,-3.5],[4,3.5]],[[0,-5],[-4.5,4],[4.5,4]],[[0,-6],[-6,0],[6,0],[0,6]]][Math.min(ks.length,4)-1][i];return`<u style="background:${KCOL[c]};left:calc(58% + ${P[0]}px);top:calc(50% + ${P[1]}px)"></u>`}).join("")}</b></span>`;
+    cells+=`<span class="dy k${Math.min(ks.length,4)}${fut?" fu":""}${isT?" td":""}" style="--n:${Math.max(1,Math.min(ks.length,4))}"${lab?` title="${lab}" aria-label="${lab}"`:""}><i>${dd}</i><b>${ks.slice(0,4).map(c=>`<u style="background:${KCOL[c]}"></u>`).join("")}</b></span>`;
   }
   const lg=KORD.filter(c=>c!=="other").map(c=>`<span><u style="background:${KCOL[c]}"></u>${KNAME[c]}</span>`).join("");
   const atMin=calY<=minY&&calM===0,atMax=calY>=y&&calM>=m;
