@@ -238,6 +238,7 @@ body:not(.org) .tb .ta{display:none}
 .scale{display:inline-flex;align-items:center;gap:3px;vertical-align:middle}
 .scale i{width:.75rem;height:.75rem;border-radius:3px;display:inline-block}
 .scale .l0{background:var(--track)}.scale .l1{background:color-mix(in srgb,var(--prog) 28%,var(--card))}.scale .l2{background:color-mix(in srgb,var(--prog) 50%,var(--card))}.scale .l3{background:color-mix(in srgb,var(--prog) 75%,var(--card))}.scale .l4{background:var(--prog)}
+.heat .od{fill:var(--card);stroke:var(--ink);stroke-width:1.2;pointer-events:none}
 .lg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.75rem;color:var(--mute);margin-top:8px}
 .lg .sw{display:inline-block;width:1.25rem;height:0;border-top:3px solid var(--prog);vertical-align:middle;margin-right:6px;border-radius:2px}
 .lg .sw.pj{opacity:.4}.lg .sw.pv{border-color:var(--mute)}
@@ -292,6 +293,7 @@ body:not(.org) .tb .ta{display:none}
   <section class="card c4" id="anStreak"></section>
   <section class="card c8" id="anProj"></section>
   <section class="card c4" id="anShoes"></section>
+  <section class="card c4" id="anOth"></section>
 
   <section class="card c3 xbx" id="gaming"><h2>Xbox</h2>
     <div class="tag"><div class="av" id="xbAv">F</div><div><b id="xbTag"></b><div class="sub"><span id="xbG"></span> G</div></div></div>
@@ -610,20 +612,21 @@ function anPrs(d){
 }
 function anCal(d){
   const CS=13,today0=new Date(y,m,now.getDate()),tn=Math.round(Date.UTC(y,m,now.getDate())/864e5),dow=(today0.getDay()+6)%7,start=tn-dow-52*7;
-  let cells="",mlab="",lastM=-1,n=0,tot=0,kmT=0;
+  let cells="",mlab="",lastM=-1,n=0,tot=0,kmT=0,nO=0;
   for(let w=0;w<53;w++){
     for(let k=0;k<7;k++){
       const dn=start+w*7+k;if(dn>tn)continue;
-      const ds=new Date(dn*864e5).toISOString().slice(0,10),km=d.days[ds]||0,lv=km<=0?0:km<5?1:km<10?2:km<15?3:4;
+      const ds=new Date(dn*864e5).toISOString().slice(0,10),km=d.days[ds]||0,lv=km<=0?0:km<5?1:km<10?2:km<15?3:4,oc=(d.oth&&d.oth.cal&&d.oth.cal[ds])||[];
       if(km>0){n++;kmT+=km}
       if(k===0){const mo=+ds.slice(5,7)-1;if(mo!==lastM&&w<51){mlab+=`<text x="${28+w*CS}" y="10">${MES[mo]}</text>`}lastM=mo}
-      cells+=`<rect class="l${lv}${dn===tn?" tdy":""}" x="${28+w*CS}" y="${18+k*CS}" width="11" height="11"><title>${dshort(ds)}: ${km>0?fmt(km,1)+" km":"sin carrera"}</title></rect>`;
+      cells+=`<rect class="l${lv}${dn===tn?" tdy":""}" x="${28+w*CS}" y="${18+k*CS}" width="11" height="11"><title>${dshort(ds)}: ${km>0?fmt(km,1)+" km":"sin carrera"}${oc.length?" · "+oc.map(c=>OCAT[c]||c).join(", "):""}</title></rect>`;
+      if(oc.length){nO++;cells+=`<circle class="od" cx="${28+w*CS+5.5}" cy="${18+k*CS+5.5}" r="2.3"/>`}
     }
   }
   $("anCal").innerHTML=`<h2>Calendario de actividad</h2><div class="sub">${n} días corridos en los últimos 12 meses, ${fmt(kmT)} km</div>
     <div class="scr" tabindex="0" role="region" aria-label="Calendario de actividad, se desplaza horizontalmente"><svg class="svgc heat" viewBox="0 0 ${28+53*CS} ${18+7*CS}" role="img" aria-label="Mapa de calor de carreras: ${n} días con carrera en los últimos 12 meses, ${fmt(kmT)} kilómetros en total. Cuanto más oscuro, más kilómetros ese día.">
       ${mlab}<text x="0" y="${18+0*CS+9}">Lun</text><text x="0" y="${18+2*CS+9}">Mié</text><text x="0" y="${18+4*CS+9}">Vie</text>${cells}</svg></div>
-    <div class="lg"><span>Menos <span class="scale" aria-hidden="true"><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span> Más</span><span>Sin carrera · menos de 5 km · 5 a 10 km · 10 a 15 km · más de 15 km</span></div>
+    <div class="lg"><span>Menos <span class="scale" aria-hidden="true"><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span> Más</span><span>Sin carrera · menos de 5 km · 5 a 10 km · 10 a 15 km · más de 15 km</span>${d.oth?`<span><svg width="10" height="10" aria-hidden="true" style="vertical-align:-1px"><circle cx="5" cy="5" r="3.2" style="fill:var(--card);stroke:var(--ink);stroke-width:1.3"/></svg> Otra actividad (${nO} días)</span>`:""}</div>
     <div class="sub" style="margin-top:16px">Kilómetros por día de la semana (${y})</div>
     <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem;max-width:28rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)),["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"])}</div>`;
   const sc=$("anCal").querySelector(".scr");if(sc)sc.scrollLeft=sc.scrollWidth;
@@ -672,12 +675,23 @@ function anProj(d){
     <div class="lg"><span><i class="sw"></i>${y}</span><span><i class="sw pj"></i>Previsión</span><span><i class="sw pv"></i>${y-1}</span>${nar?`<span>Cifras a la derecha: previsión, ${y-1} y objetivo</span>`:""}</div>`;
   pb("projBar",Math.min(100,d.year/GOAL_YEAR*100),"Progreso hacia el objetivo anual de kilómetros");
 }
+const OCAT={walk:"Caminata",yoga:"Pilates / yoga",gym:"Gimnasio / funcional",bike:"Bicicleta",other:"Otros"};
+function anOth(d){
+  const o=d.oth,el=$("anOth");
+  if(!o){el.innerHTML='<h2>Otras actividades</h2><div class="sub">Caminatas, pilates, gimnasio y bicicleta aparecerán aquí tras la próxima actualización del servidor.</div>';return}
+  const sum=b=>Object.values(b).reduce((a,v)=>({n:a.n+v.n,s:a.s+v.s}),{n:0,s:0});
+  const mo=sum(o.month),yr=sum(o.year);
+  const rows=Object.keys(OCAT).filter(c=>(o.year[c]||{}).n).map(c=>{const a=o.month[c]||{n:0,s:0},b=o.year[c];return `<tr><td>${OCAT[c]}</td><td>${a.n?a.n+" · "+dur(a.s):"–"}</td><td>${b.n} · ${dur(b.s)}</td></tr>`}).join("");
+  el.innerHTML=`<h2>Otras actividades</h2>
+    <div class="big">${mo.n} <small>${mo.n===1?"sesión":"sesiones"}</small></div><div class="sub">${mo.n?dur(mo.s)+" este mes":"este mes"} · ${yr.n} este año${yr.n?" ("+dur(yr.s)+")":""}</div>
+    ${rows?`<table class="tbl" style="margin-top:12px"><thead><tr><th scope="col">Tipo</th><th scope="col">Mes</th><th scope="col">Año</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub" style="margin-top:12px">Aún no hay otras actividades este año.</div>'}`;
+}
 function anShoes(d){
   const g=d.gear||[];
   $("anShoes").innerHTML=`<h2>Zapatillas</h2>${g.length?g.map(z=>{const p=Math.min(100,z.km/GEAR_LIFE*100),old=z.km>=GEAR_LIFE;return`<div class="shoe"><div class="top"><b>${xe(z.name||"Zapatillas sin nombre")}</b><span>${fmt(z.km,0)} km${old?" · toca cambiarlas":z.km>=GEAR_LIFE*.85?" · cerca del límite":""}</span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${GEAR_LIFE}" aria-valuenow="${Math.round(Math.min(z.km,GEAR_LIFE))}" aria-label="Kilómetros de ${xe(z.name||"zapatillas")} sobre ${GEAR_LIFE} de vida útil"><i style="width:${p}%"></i></div><div class="sub">Vida útil orientativa ${GEAR_LIFE} km${z.last?" · último uso "+dshort(z.last):""}</div></div>`}).join(""):'<div class="sub">No hay zapatillas asignadas a tus carreras. Asígnalas en Strava (Mi rendimiento → Equipamiento).</div>'}
     ${d.gearErr?'<div class="pend">Falta el permiso de perfil para leer los nombres. Repite la conexión de Strava (paso 4 de la guía).</div>':""}`;
 }
-function paintAn(){const d=S;[anPace,anLast,anPrs,anCal,anStreak,anProj,anShoes].forEach(f=>{try{f(d)}catch(e){console.error(f.name,e)}})}
+function paintAn(){const d=S;[anPace,anLast,anPrs,anCal,anStreak,anProj,anShoes,anOth].forEach(f=>{try{f(d)}catch(e){console.error(f.name,e)}})}
 render();afterRun=()=>{render();paintAn()};paintAn();load();loadStrava();
 let lastW=0;try{new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(lastW&&w!==lastW){try{anPace(S);anProj(S)}catch(e){}}lastW=w}).observe(document.querySelector('main'))}catch(e){}
 

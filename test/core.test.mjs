@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { aggregate, analyze, syncRuns, buildPrs, stepEfforts, trim, getAccessToken, fetchDashboardData, signState, checkState, safeEq, StravaError } from '../netlify/lib/strava-core.mjs';
+import { aggregate, analyze, syncRuns, buildPrs, stepEfforts, trim, getAccessToken, fetchDashboardData, signState, checkState, safeEq, StravaError, catOf, summarizeOthers } from '../netlify/lib/strava-core.mjs';
 
 const mem = () => { const m = new Map(); return { m,
   async get(k) { return m.has(k) ? JSON.parse(m.get(k)) : null; },
@@ -163,6 +163,39 @@ await t('syncRuns: primera vez completa, luego incremental con after=, fusiona y
   serve = [run(1, '2026-10-01', 12), run(3, '2026-10-16', 6)];
   r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: new Date(t0.getTime() + 25 * 3600e3) });
   assert.equal(r.full, true); assert.ok(!calls[2].includes('after=')); assert.deepEqual(r.runs.map(x => x.id).sort(), [1, 3]);
+});
+await t('catOf: caminata, yoga, gimnasio, bici y otros', async () => {
+  assert.equal(catOf('Walk'), 'walk'); assert.equal(catOf('Hike'), 'walk');
+  assert.equal(catOf('Pilates'), 'yoga'); assert.equal(catOf('Yoga'), 'yoga');
+  for (const t of ['Workout', 'WeightTraining', 'Crossfit', 'HighIntensityIntervalTraining']) assert.equal(catOf(t), 'gym');
+  for (const t of ['Ride', 'VirtualRide', 'MountainBikeRide', 'GravelRide', 'EBikeRide']) assert.equal(catOf(t), 'bike');
+  assert.equal(catOf('Swim'), 'other'); assert.equal(catOf(undefined), 'other');
+});
+await t('summarizeOthers: mes, año y categorías por día', async () => {
+  const o = [
+    { id: 1, d: '2026-10-14T08:00:00Z', c: 'walk', s: 1800 }, { id: 2, d: '2026-10-14T19:00:00Z', c: 'gym', s: 3000 },
+    { id: 3, d: '2026-10-19T08:00:00Z', c: 'gym', s: 2400 }, { id: 4, d: '2026-09-30T08:00:00Z', c: 'bike', s: 3600 },
+    { id: 5, d: '2025-01-05T08:00:00Z', c: 'walk', s: 999 }, { id: 6, d: 'mal', c: 'walk', s: 5 },
+    { id: 7, d: '2026-10-15T08:00:00Z', s: 60 },
+  ];
+  const r = summarizeOthers(o, { y: 2026, m: 10, d: 19 });
+  assert.deepEqual(r.month.gym, { n: 2, s: 5400 });
+  assert.deepEqual(r.month.walk, { n: 1, s: 1800 });
+  assert.deepEqual(r.month.other, { n: 1, s: 60 });
+  assert.deepEqual(r.year.bike, { n: 1, s: 3600 });
+  assert.equal(r.year.walk.n, 1);
+  assert.deepEqual(r.cal['2026-10-14'].sort(), ['gym', 'walk']);
+  assert.equal(r.cal['2025-01-05'], undefined);
+});
+await t('syncRuns: guarda categoría y duración y rehace todo si el guardado es de la versión antigua', async () => {
+  const s = mem(); const t0 = new Date('2026-10-19T08:00:00Z');
+  const wk = { id: 50, start_date_local: '2026-10-19T07:40:00Z', sport_type: 'Workout', moving_time: 2700, distance: 0 };
+  const f = async () => ({ ok: true, status: 200, json: async () => [wk] });
+  let r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: t0 });
+  assert.deepEqual(r.others[0], { id: 50, d: '2026-10-19T07:40:00Z', c: 'gym', s: 2700 });
+  await s.setJSON('activities', { syncedAt: 1, fullAt: t0.toISOString(), runs: [], others: [{ id: 50, d: '2026-10-19T07:40:00Z' }] });
+  r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: new Date(t0.getTime() + 3600e3) });
+  assert.equal(r.full, true); assert.equal(r.others[0].c, 'gym');
 });
 await t('syncRuns: si Strava falla en incremental no se pierde lo guardado', async () => {
   const s = await authStore();

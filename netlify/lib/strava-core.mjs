@@ -3,6 +3,15 @@ import { timingSafeEqual, createHmac } from 'node:crypto';
 
 export const API = 'https://www.strava.com/api/v3';
 export const TOKEN_URL = 'https://www.strava.com/oauth/token';
+// Categorías de las actividades que no son carreras (tarjeta «Otras actividades» y puntos del calendario).
+export const OTHER_CATS = {
+  walk: ['Walk', 'Hike'],
+  yoga: ['Yoga', 'Pilates'],
+  gym: ['Workout', 'WeightTraining', 'Crossfit', 'HighIntensityIntervalTraining'],
+  bike: ['Ride', 'VirtualRide', 'MountainBikeRide', 'GravelRide', 'EBikeRide', 'EMountainBikeRide'],
+};
+const CAT_BY_TYPE = new Map(Object.entries(OTHER_CATS).flatMap(([c, ts]) => ts.map(t => [t, c])));
+export const catOf = t => CAT_BY_TYPE.get(t) || 'other';
 export const RUN_TYPES = new Set(['Run', 'TrailRun', 'VirtualRun']);
 export const CACHE_MS = 15 * 60 * 1000;
 
@@ -254,9 +263,23 @@ const toRaw = r => ({ start_date_local: r.d, distance: r.km * 1000, sport_type: 
 // Guarda el historial de carreras en el servidor. Las siguientes veces solo pide a Strava lo reciente
 // (con 7 días de margen por subidas tardías) y lo fusiona; una vez al día vuelve a bajar todo para
 // recoger ediciones y borrados.
+// Resumen de las demás actividades: sesiones y tiempo por categoría (mes y año actuales) y categorías por día (últimos 12 meses).
+export function summarizeOthers(others, today) {
+  const { y, m, d } = today, todayN = Date.UTC(y, m - 1, d) / 86400000;
+  const month = {}, year = {}, cal = {};
+  const add = (o, c, s) => { const b = o[c] || (o[c] = { n: 0, s: 0 }); b.n++; b.s += s; };
+  for (const a of others) {
+    if (!/^\d{4}-\d{2}-\d{2}/.test(String(a.d))) continue;
+    const c = a.c || 'other', s = a.s || 0, ay = +a.d.slice(0, 4), am = +a.d.slice(5, 7), n = dayNum(a.d);
+    if (ay === y) { add(year, c, s); if (am === m) add(month, c, s); }
+    if (n > todayN - 371 && n <= todayN) { const k = a.d.slice(0, 10); (cal[k] || (cal[k] = [])).includes(c) || cal[k].push(c); }
+  }
+  return { month, year, cal };
+}
+
 export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date() }) {
   const saved = await store.get('activities', { type: 'json' }).catch(() => null);
-  const full = !saved || !Array.isArray(saved.runs) || !Array.isArray(saved.others) || !saved.fullAt || now.getTime() - new Date(saved.fullAt).getTime() > FULL_RESYNC_MS;
+  const full = !saved || !Array.isArray(saved.runs) || !Array.isArray(saved.others) || saved.v !== 2 || !saved.fullAt || now.getTime() - new Date(saved.fullAt).getTime() > FULL_RESYNC_MS;
   const after = full ? '' : `after=${Math.max(0, (saved.syncedAt || 0) - SYNC_MARGIN_S)}&`;
   const fetched = [];
   for (let page = 1; page <= 15; page++) {
@@ -265,7 +288,7 @@ export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date
     if (batch.length < 200) break;
   }
   const fresh = fetched.filter(a => RUN_TYPES.has(a.sport_type || a.type)).map(trim);
-  const freshOthers = fetched.filter(a => !RUN_TYPES.has(a.sport_type || a.type)).map(a => ({ id: a.id, d: String(a.start_date_local || '') }));
+  const freshOthers = fetched.filter(a => !RUN_TYPES.has(a.sport_type || a.type)).map(a => ({ id: a.id, d: String(a.start_date_local || ''), c: catOf(a.sport_type || a.type), s: Math.round(a.moving_time || 0) }));
   let runs, others;
   if (full) { runs = fresh; others = freshOthers; }
   else {
@@ -280,7 +303,7 @@ export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date
   for (const r of runs) if (!newest || r.d > newest.d) newest = r;
   for (const r of runs) if (r !== newest) r.p = null; // la ruta solo hace falta de la última carrera
   await store.setJSON('activities', {
-    syncedAt: Math.floor(now.getTime() / 1000), fullAt: full ? now.toISOString() : saved.fullAt, runs, others,
+    syncedAt: Math.floor(now.getTime() / 1000), fullAt: full ? now.toISOString() : saved.fullAt, runs, others, v: 2,
   });
   return { runs, others, full };
 }
@@ -308,7 +331,7 @@ export async function fetchDashboardData({ env, store, fetchImpl = fetch, now = 
   gear = (active.length ? active : gear).sort((a, b) => b.last.localeCompare(a.last)).slice(0, 6);
   const done = (await store.get(EFFORTS_KEY, { type: 'json' }).catch(() => null)) || {};
   return {
-    ok: true, updated: now.toISOString(), ...agg, ...ana, gear, gearErr,
+    ok: true, updated: now.toISOString(), ...agg, ...ana, oth: summarizeOthers(others, today), gear, gearErr,
     prs: buildPrs(done, index),
     total: r1((stats.all_run_totals?.distance || 0) / 1000),
     totalActs: stats.all_run_totals?.count || 0,
