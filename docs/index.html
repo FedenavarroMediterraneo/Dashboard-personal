@@ -254,13 +254,12 @@ body:not(.org) .tb .ta{display:none}
 .dy i{font-style:normal;font-size:.625rem;line-height:1.1;color:var(--mute);font-variant-numeric:tabular-nums}
 .dy b{display:flex;gap:2px;height:6px;margin-top:2px}
 .dy u,.ylg u{display:inline-block;width:5px;height:5px;border-radius:50%;text-decoration:none}
-.mbig{max-width:30rem;margin:0 auto}
-.mbig .md,.mbig .mw{gap:6px}
-.mbig .dy{min-height:46px;padding-top:4px;border-radius:10px;background:var(--track)}
-.mbig .dy i{font-size:.6875rem;align-self:flex-start;margin-left:6px}
-.mbig .dy b{height:16px;margin-top:2px;gap:0;align-items:center}
-.mbig .dy u{width:15px;height:15px;box-shadow:0 0 0 1.5px var(--track)}
-.mbig .dy u+u{margin-left:-6px}
+.mbig{max-width:20rem;margin:0 auto}
+.mbig .md,.mbig .mw{gap:4px}
+.mbig .dy{position:relative;aspect-ratio:1;min-height:0;padding:0;border-radius:8px;background:var(--track)}
+.mbig .dy i{position:absolute;left:4px;top:2px;font-size:.5625rem}
+.mbig .dy b{position:absolute;inset:0;display:block;margin:0;height:auto}
+.mbig .dy u{position:absolute;width:13px;height:13px;transform:translate(-50%,-50%);box-shadow:0 0 0 1.5px var(--track)}
 .dy.fu i{opacity:.45}
 .dy.td{outline:1.5px solid var(--ink);outline-offset:-1px}
 .dy.td i{color:var(--ink);font-weight:700}
@@ -654,7 +653,7 @@ function anCal(d){
     const fut=calY===y&&(calM>m||(calM===m&&dd>now.getDate())),isT=calY===y&&calM===m&&dd===now.getDate();
     if(ks.length)tot++;
     const lab=ks.length?`${dd} de ${MESF[calM].toLowerCase()}: ${ks.map(c=>KNAME[c]).join(", ")}`:"";
-    cells+=`<span class="dy${fut?" fu":""}${isT?" td":""}"${lab?` title="${lab}" aria-label="${lab}"`:""}><i>${dd}</i><b>${ks.slice(0,4).map(c=>`<u style="background:${KCOL[c]}"></u>`).join("")}</b></span>`;
+    cells+=`<span class="dy${fut?" fu":""}${isT?" td":""}"${lab?` title="${lab}" aria-label="${lab}"`:""}><i>${dd}</i><b>${ks.slice(0,4).map((c,i)=>{const P=[[[0,2]],[[-4,-3],[4,5]],[[0,-4],[-4.5,5],[4.5,5]],[[0,-7],[-7,0],[7,0],[0,7]]][Math.min(ks.length,4)-1][i];return`<u style="background:${KCOL[c]};left:calc(50% + ${P[0]}px);top:calc(52% + ${P[1]}px)"></u>`}).join("")}</b></span>`;
   }
   const lg=KORD.filter(c=>c!=="other").map(c=>`<span><u style="background:${KCOL[c]}"></u>${KNAME[c]}</span>`).join("");
   const atMin=calY<=minY&&calM===0,atMax=calY>=y&&calM>=m;
