@@ -246,6 +246,7 @@ body:not(.org) .tb .ta{display:none}
 .otbl th:not(:first-child),.otbl td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
 .otbl td b{font-weight:700}
 .otbl .oe{display:inline-block;width:1.6em;text-align:center}
+.ystrip{display:block;max-width:100%;height:auto}
 .yg{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:16px 16px}
 .mh{font-weight:600;font-size:.875rem;margin-bottom:4px}
 .mw,.md{display:grid;grid-template-columns:repeat(7,1fr)}
@@ -636,7 +637,7 @@ const KORD=["run","walk","yoga","gym","bike","padel","pickle","other"],KNAME={ru
 const MESF=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 function anCal(d){
   const hp=(d.monthsPrev||[]).some(v=>v>0),minY=hp?y-1:y;if(calY<minY)calY=minY;if(calY>y)calY=y;
-  const oc=(d.oth&&d.oth.cal)||{},p2=n=>String(n).padStart(2,"0");let tot=0,months="";
+  const oc=(d.oth&&d.oth.cal)||{},p2=n=>String(n).padStart(2,"0");let tot=0,months="";const DK={};
   for(let mo=0;mo<12;mo++){
     const first=(new Date(calY,mo,1).getDay()+6)%7,nd=new Date(calY,mo+1,0).getDate();let cells="",nAct=0;
     for(let k=0;k<first;k++)cells+="<span></span>";
@@ -646,17 +647,38 @@ function anCal(d){
       for(const c of KORD)if(c!=="run"&&(oc[ds]||[]).includes(c))ks.push(c);
       for(const c of(oc[ds]||[]))if(!KORD.includes(c)&&!ks.includes("other"))ks.push("other");
       const fut=calY===y&&(mo>m||(mo===m&&dd>now.getDate())),isT=calY===y&&mo===m&&dd===now.getDate();
-      if(ks.length){nAct++}
+      if(ks.length){nAct++}DK[ds]=ks;
       const lab=ks.length?`${dd} de ${MESF[mo].toLowerCase()}: ${ks.map(c=>KNAME[c]).join(", ")}`:"";
       cells+=`<span class="dy${fut?" fu":""}${isT?" td":""}"${lab?` title="${lab}" aria-label="${lab}"`:""}><i>${dd}</i><b>${ks.slice(0,4).map(c=>`<u style="background:${KCOL[c]}"></u>`).join("")}</b></span>`;
     }
     tot+=nAct;
     months+=`<div class="mo"><div class="mh">${MESF[mo]}</div><div class="mw" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="md">${cells}</div></div>`;
   }
+  let strip="";
+  if(($("anCal").clientWidth||0)>=560){
+    const P=18,L=16,T=18,j1=new Date(calY,0,1),sn=Math.round((j1-new Date(calY,0,1-((j1.getDay()+6)%7)))/864e5),cols=Math.ceil((sn+(new Date(calY,11,31)-j1)/864e5+1)/7);
+    let g="",ml="";
+    for(let i=0;i<7;i++)ml+=`<text x="${L-5}" y="${T+i*P+12}" text-anchor="end" font-size="9" fill="var(--mute)">${"LMXJVSD"[i]}</text>`;
+    for(let mo=0;mo<12;mo++){const o=sn+Math.round((new Date(calY,mo,1)-j1)/864e5);ml+=`<text x="${L+Math.floor(o/7)*P}" y="11" font-size="10" fill="var(--mute)">${MESF[mo].slice(0,3)}</text>`}
+    const DN2=Math.round((new Date(calY,11,31)-j1)/864e5)+1;
+    for(let k=0;k<DN2;k++){
+      const dt=new Date(calY,0,1+k),mo=dt.getMonth(),dd=dt.getDate(),ds=`${calY}-${p2(mo+1)}-${p2(dd)}`,ks=(DK[ds]||[]).slice(0,4),o=sn+k,x=L+Math.floor(o/7)*P,yy=T+(o%7)*P;
+      const fut=calY===y&&(mo>m||(mo===m&&dd>now.getDate())),isT=calY===y&&mo===m&&dd===now.getDate(),n=ks.length,cx=x+8,cy=yy+8;
+      let dots="";
+      if(n===1)dots=`<circle cx="${cx}" cy="${cy}" r="4" fill="${KCOL[ks[0]]}"/>`;
+      else if(n===2)dots=ks.map((c,i)=>`<circle cx="${x+4.5+i*7}" cy="${cy}" r="3" fill="${KCOL[c]}"/>`).join("");
+      else if(n===3)dots=ks.map((c,i)=>`<circle cx="${x+3.5+i*4.5}" cy="${cy}" r="2.1" fill="${KCOL[c]}"/>`).join("");
+      else if(n===4)dots=ks.map((c,i)=>`<circle cx="${x+5+(i%2)*6}" cy="${yy+5+Math.floor(i/2)*6}" r="2.2" fill="${KCOL[c]}"/>`).join("");
+      const tt=n?`${dd} de ${MESF[mo].toLowerCase()}: ${ks.map(c=>KNAME[c]).join(", ")}`:"";
+      g+=`<g>${tt?`<title>${tt}</title>`:""}<rect x="${x}" y="${yy}" width="16" height="16" rx="4" fill="var(--track)"${fut?' opacity=".45"':""}${isT?' stroke="var(--ink)" stroke-width="1.5"':""}/>${dots}</g>`;
+    }
+    const W=L+cols*P,H=T+7*P;
+    strip=`<svg class="ystrip" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Calendario de actividad ${calY}: ${tot} días con actividad">${ml}${g}</svg>`;
+  }
   const lg=KORD.filter(c=>c!=="other").map(c=>`<span><u style="background:${KCOL[c]}"></u>${KNAME[c]}</span>`).join("");
   $("anCal").innerHTML=`<h2>Calendario de actividad</h2>
     <div class="calnav"><button type="button" id="ycPrev" aria-label="Año anterior"${calY<=minY?" disabled":""}>‹</button><button type="button" class="ttl" id="ycTitle" aria-label="Volver al año actual">${calY} · ${tot} días con actividad</button><button type="button" id="ycNext" aria-label="Año siguiente"${calY>=y?" disabled":""}>›</button></div>
-    <div class="yg">${months}</div>
+    ${strip||`<div class="yg">${months}</div>`}
     <div class="lg ylg">${lg}<span>Un punto por actividad</span></div>
     <div class="sub" style="margin-top:16px">Kilómetros por día de la semana (${y})</div>
     <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem;max-width:28rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)),["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"])}</div>`;
@@ -726,7 +748,7 @@ function anShoes(d){
 }
 function paintAn(){const d=S;[anPace,anLast,anPrs,anCal,anStreak,anProj,anShoes,anOth].forEach(f=>{try{f(d)}catch(e){console.error(f.name,e)}})}
 render();afterRun=()=>{render();paintAn()};paintAn();load();loadStrava();
-let lastW=0;try{new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(lastW&&w!==lastW){try{anPace(S);anProj(S)}catch(e){}}lastW=w}).observe(document.querySelector('main'))}catch(e){}
+let lastW=0;try{new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(lastW&&w!==lastW){try{anPace(S);anProj(S);anCal(S)}catch(e){}}lastW=w}).observe(document.querySelector('main'))}catch(e){}
 
 
 // Gaming: datos reales desde tu servidor de Netlify (Steam, Xbox, PlayStation, Nintendo). Mientras no lleguen, se ven datos de ejemplo.
