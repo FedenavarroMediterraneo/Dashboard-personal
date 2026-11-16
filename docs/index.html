@@ -697,10 +697,8 @@ function anLast(d){
       spl=`<div class="sub shd">Parciales por km <span>· el más rápido, ${pc(fast)}</span></div><div class="spl" role="img" aria-label="Ritmo de cada kilómetro: ${sp.map((x,i)=>`km ${i+1} ${pc(x.pace)}`).join(", ")}">${sp.map((x,i)=>{const h=slow>fast?34+66*(slow-Math.min(Math.max(x.pace,fast),slow))/(slow-fast):100;return`<div data-tip="${x.part?"Resto ("+fmt(x.km,2)+" km)":"Km "+(i+1)} · ${pc(x.pace)} /km${x.hr?" · "+x.hr+" ppm":""}${x.e?" · "+(x.e>0?"+":"")+x.e+" m":""}" tabindex="0" class="${i===fi?"fast":""}">${lab?`<b>${pc(x.pace)}</b>`:""}<span style="height:${h.toFixed(0)}%"></span><i>${x.part?"·":i+1}</i></div>`}).join("")}</div>`;
     }
     const hrs=(D.hr||[]).filter(Boolean),hrAvg=l.hr||(hrs.length?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length):null);
-    const sparks=spark(D.hr,"#e03a2f",v=>v+" ppm","Pulsaciones",`media ${hrAvg||"–"} · máx ${D.hrMax||Math.max(...hrs)} ppm`,false,tl)
-      +spark(D.pc,"#2f9e44",v=>pc(v)+" /km","Ritmo",`media ${pc(l.pace)} /km`,true,tl)
-      +spark(D.cd,"#2f4fb8",v=>v+" ppm","Cadencia",`media ${D.cad||"–"} pasos/min`,false,tl);
-    const tiles=[[D.cad,"pasos/min","Cadencia"],[D.hrMax,"ppm","FC máxima"],[D.maxPace?pc(D.maxPace):null,"/km","Ritmo punta"],[D.cal,"kcal","Calorías"],[D.elapsed&&D.elapsed-tsec>30?dur(D.elapsed-tsec):null,"","Parado"],[D.temp!=null?Math.round(D.temp):null,"°C","Temperatura"]].filter(t=>t[0]!=null);
+    const sparks=spark(D.hr,"#e03a2f",v=>v+" ppm","Pulsaciones",`media ${hrAvg||"–"} · máx ${D.hrMax||Math.max(...hrs)} ppm`,false,tl);
+    const tiles=[[D.elapsed&&D.elapsed-tsec>30?dur(D.elapsed-tsec):null,"","Parado"],[D.temp!=null?Math.round(D.temp):null,"°C","Temperatura"]].filter(t=>t[0]!=null);
     more=`${spl}${sparks}${tiles.length?`<div class="stg">${tiles.map(t=>`<div><b>${t[0]}${t[1]?` <small>${t[1]}</small>`:""}</b><span class="sub">${t[2]}</span></div>`).join("")}</div>`:""}`;
   }else more=sget(SK)?`<div class="sub" style="margin-top:10px" id="lastLoad">Cargando más detalles de la carrera…</div>`:"";
   $("anLast").innerHTML=`<h2>Última carrera</h2><div class="lastg">${route}<div>
