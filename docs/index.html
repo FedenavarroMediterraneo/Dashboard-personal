@@ -158,7 +158,7 @@ body:not(.org) .tb .ta{display:none}
 .trs svg{width:28px;height:28px;flex:none;stroke-width:0}
 .tp{fill:#9fd8ff;filter:drop-shadow(0 0 4px #5ab4ff)}.tg{fill:#ffc83d}.ts{fill:#d3d8de}.tb{fill:#e0976a}
 .psx #psT{font-size:inherit}
-.viewer #runBtn,.viewer #keyF,.viewer #psEd,.viewer #psF,.viewer #addKm{display:none!important}
+.viewer #runBtn,.viewer #keyF,.viewer #psEd,.viewer #psF,.viewer #addP{display:none!important}
 .psf[hidden]{display:none}
 .psf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .psf label{font-size:.75rem;display:flex;flex-direction:column;gap:3px}
@@ -200,8 +200,18 @@ body:not(.org) .tb .ta{display:none}
 .mini:active{transform:scale(.97)}
 @media (pointer:coarse){.mini{min-height:44px}}
 .keyf{margin-top:8px}.keyf div{display:flex;gap:8px;margin-top:4px}.keyf input{flex:1;min-width:0;font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line,currentColor);background:transparent;color:inherit}
-.c8{grid-column:span 8}
-@container (max-width:60rem){.c8{grid-column:span 12}}
+.c8{grid-column:span 8}.c12{grid-column:span 12}
+.sh{font-size:.9375rem;font-weight:650;margin:0 0 10px}
+.inner{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.rk2,.cs2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px 28px;align-items:start}
+.addp{min-width:0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.tile{border-radius:16px;padding:14px 12px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--soft)}
+.tile b{font-size:2.5rem;font-weight:750;letter-spacing:-.03em;line-height:1}
+.tile span:last-child{font-size:.75rem;color:var(--mute)}
+.tile .te{font-size:1.25rem;line-height:1;margin-bottom:4px}
+.tile.t1 b{color:#e8590c}.tile.t2 b{color:var(--prog)}
+@container (max-width:60rem){.c8,.c12{grid-column:span 12}}
 .sect{grid-column:1/-1;font-size:1.125rem;margin:10px 0 -4px}
 .big2{font-size:1.75rem;font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .big2 small{font-size:.875rem;font-weight:600;color:var(--mute)}
@@ -295,31 +305,30 @@ body:not(.org) .tb .ta{display:none}
     <div class="sub">km este mes</div>
     <div class="row3"><div><b id="runYear"></b><span class="sub">Este año</span></div><div><b id="runTotal"></b><span class="sub">Total</span></div><div><b id="runActs"></b><span class="sub">Actividades</span></div></div>
     <div class="sub">Kilómetros por mes</div><div class="chart" id="runChart" style="--bc:var(--prog);--bn:var(--ink)"></div>
+    <div class="inner" id="anPrs"></div>
     <div class="runst"><span class="sub" id="runSt" role="status"></span><button class="mini" id="runBtn" type="button">Conectar Strava</button></div>
     <form class="keyf" id="keyF" hidden><label class="sub" for="keyI">Clave de tu dashboard</label><div><input id="keyI" type="password" autocomplete="current-password" required><button class="mini" type="submit">Guardar</button></div></form>
   </section>
-  <section class="card c4" id="cRank"><h2>Ranking de amigos</h2><div class="calnav" style="margin:-6px 0 6px"><button type="button" id="rkPrev" aria-label="Mes anterior">‹</button><button type="button" class="ttl" id="rankMonth" aria-label="Volver al mes actual"></button><button type="button" id="rkNext" aria-label="Mes siguiente">›</button></div>
+  <section class="card c8" id="cRank"><h2>Ranking de amigos</h2>
+    <div class="rk2"><div class="rk"><div class="calnav" style="margin:-6px 0 6px"><button type="button" id="rkPrev" aria-label="Mes anterior">‹</button><button type="button" class="ttl" id="rankMonth" aria-label="Volver al mes actual"></button><button type="button" id="rkNext" aria-label="Mes siguiente">›</button></div>
     <ul class="rank" id="rank"></ul><div class="sub" id="rankGap"></div><div class="bar"><i id="rankBar"></i></div>
-    <div class="sub" id="rkSt" role="status" style="margin-top:8px"></div>
-  </section>
-<section class="card c4 full" id="addKm"><h2>Añadir kilómetros</h2>
+    <div class="sub" id="rkSt" role="status" style="margin-top:8px"></div></div>
+    <div class="addp" id="addP"><h3 class="sh">Añadir kilómetros</h3>
     <div class="form"><label>Amigo<select id="fN"></select></label><label>Fecha<input type="date" id="fD"></label><label>Kilómetros<input type="number" id="fK" step="0.1" min="0" inputmode="decimal" placeholder="0,0"></label><button class="btn" id="fAdd">Guardar</button></div>
     <div class="sub" id="fMsg" role="status" style="min-height:18px;margin-top:6px"></div>
     <ul class="log" id="log"></ul>
     <div class="sub" style="margin-top:12px">Amigos del ranking</div>
     <div class="chips" id="chips"></div>
-    <div class="add"><input id="aN" placeholder="Nombre" maxlength="20" aria-label="Nombre del amigo"><button class="btn" id="aAdd">Añadir</button></div>
+    <div class="add"><input id="aN" placeholder="Nombre" maxlength="20" aria-label="Nombre del amigo"><button class="btn" id="aAdd">Añadir</button></div></div></div>
   </section>
 
   <h2 class="sect" id="analisis">Análisis de running</h2>
   <section class="card c4" id="anPace"></section>
   <section class="card c4" id="anLast"></section>
-  <section class="card c4" id="anPrs"></section>
-  <section class="card c8" id="anCal"></section>
-  <section class="card c4" id="anStreak"></section>
-  <section class="card c8" id="anProj"></section>
-  <section class="card c4" id="anShoes"></section>
   <section class="card c4" id="anOth"></section>
+  <section class="card c8" id="anCal"><div class="cs2"><div id="anStreak"></div><div id="anCalB"></div></div></section>
+  <section class="card c4" id="anShoes"></section>
+  <section class="card c12" id="anProj"></section>
 
   <section class="card c3 xbx" id="gaming"><h2>Xbox</h2>
     <div class="tag"><div class="av" id="xbAv">F</div><div><b id="xbTag"></b><div class="sub"><span id="xbG"></span> G</div></div></div>
@@ -633,7 +642,7 @@ function why(p){const g=p.diag||{};
 function anPrs(d){
   const NAMES=[["1k","1 km",1],["5k","5 km",5],["10k","10 km",10],["Half-Marathon","Media maratón",21.0975],["Marathon","Maratón",42.195]],p=d.prs||{items:{}};
   const rows=NAMES.filter(n=>p.items[n[0]]).map(n=>{const it=p.items[n[0]];return`<tr><td>${n[1]}</td><td><b>${clk(it.t)}</b></td><td>${pc(it.t/n[2])} /km</td><td>${dshort(it.d)}</td></tr>`}).join("");
-  $("anPrs").innerHTML=`<h2>Mejores marcas</h2>${rows?`<table class="tbl"><thead><tr><th scope="col">Distancia</th><th scope="col">Tiempo</th><th scope="col">Ritmo</th><th scope="col">Fecha</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub">'+(p.pending===0&&p.total>0?'Strava no ha devuelto mejores marcas en tus carreras (suele pasar con actividades sin GPS detallado).':'Todavía no hay marcas calculadas.')+'</div>'}
+  $("anPrs").innerHTML=`<h3 class="sh">Mejores marcas</h3>${rows?`<table class="tbl"><thead><tr><th scope="col">Distancia</th><th scope="col">Tiempo</th><th scope="col">Ritmo</th><th scope="col">Fecha</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="sub">'+(p.pending===0&&p.total>0?'Strava no ha devuelto mejores marcas en tus carreras (suele pasar con actividades sin GPS detallado).':'Todavía no hay marcas calculadas.')+'</div>'}
     ${p.pending>0?`<div class="pend" role="status">Analizando tu historial: ${p.scanned} de ${p.total} carreras. Se completa solo en las próximas visitas.${why(p)}</div>`:""}`;
 }
 let calY=y,calM=m;
@@ -657,7 +666,7 @@ function anCal(d){
   }
   const lg=KORD.filter(c=>c!=="other").map(c=>`<span><u style="background:${KCOL[c]}"></u>${KNAME[c]}</span>`).join("");
   const atMin=calY<=minY&&calM===0,atMax=calY>=y&&calM>=m;
-  $("anCal").innerHTML=`<h2>Calendario de actividad</h2>
+  $("anCalB").innerHTML=`<h3 class="sh">Calendario de actividad</h3>
     <div class="calnav"><button type="button" id="ycPrev" aria-label="Mes anterior"${atMin?" disabled":""}>‹</button><button type="button" class="ttl" id="ycTitle" aria-label="Volver al mes actual">${MESF[calM]} ${calY} · ${tot} ${tot===1?"día":"días"}</button><button type="button" id="ycNext" aria-label="Mes siguiente"${atMax?" disabled":""}>›</button></div>
     <div class="mo mbig"><div class="mw" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="md">${cells}</div></div>
     <div class="lg ylg">${lg}</div>
@@ -672,8 +681,8 @@ function anCal(d){
 function anStreak(d){
   const s=d.streak,tn=Math.round(Date.UTC(y,m,now.getDate())/864e5),dow=(new Date(y,m,now.getDate()).getDay()+6)%7,ws=new Date((tn-dow)*864e5).toISOString().slice(0,10);
   const wk=Object.entries(d.days).filter(([k])=>k>=ws).reduce((a,[,v])=>a+v,0);
-  $("anStreak").innerHTML=`<h2>Racha</h2>
-    <div class="row3"><div><b class="big2">${s.weeks}</b><span class="sub">Semanas seguidas</span></div><div><b class="big2">${s.days}</b><span class="sub">Días seguidos</span></div></div>
+  $("anStreak").innerHTML=`<h3 class="sh">Racha</h3>
+    <div class="tiles"><div class="tile t1"><span class="te" aria-hidden="true">🔥</span><b>${s.days}</b><span>${s.days===1?"día seguido":"días seguidos"}</span></div><div class="tile t2"><span class="te" aria-hidden="true">📅</span><b>${s.weeks}</b><span>${s.weeks===1?"semana seguida":"semanas seguidas"}</span></div></div>
     <div class="sub">Cuenta cualquier actividad (carrera, caminata, pilates…).</div>
     <div class="kv"><span class="sub">Esta semana</span><b>${fmt(wk,1)} km</b></div>
     <div class="bar"><i id="wkBar"></i></div>
@@ -863,7 +872,7 @@ tick();setInterval(tick,1000);
 // Organizar fichas: mover, minimizar y ocultar; se guarda en este dispositivo.
 (function(){
   const LK="layout",grid=document.querySelector(".grid"),cards=[...grid.querySelectorAll(":scope>section.card")],orig=cards.slice();
-  const cid=c=>c.id,NAMES={cNin:"Nintendo"};
+  const cid=c=>c.id,NAMES={cNin:"Nintendo",anCal:"Racha y calendario",cRank:"Ranking y kilómetros"};
   const title=c=>{const h=c.querySelector(":scope>h2");return(h&&h.textContent.trim())||NAMES[c.id]||c.id};
   let L={};try{L=JSON.parse(sget(LK)||"{}")||{}}catch(e){L={}}
   for(const k of["order","hidden","min"])if(!Array.isArray(L[k]))L[k]=[];
