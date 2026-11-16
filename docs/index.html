@@ -206,6 +206,9 @@ body:not(.org) .tb .ta{display:none}
 .prd b{text-transform:capitalize}
 .prd{margin-top:4px;color:var(--ink);min-height:1.2em}
 .svgc .hit{outline:none}.svgc .hit:focus-visible{stroke:var(--ink);stroke-width:1}
+.jg{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:4px 0 10px}
+.sh2{margin:6px 0 2px;font-weight:600}
+#jubTL{width:100%;height:auto;display:block}
 .sh{font-size:.9375rem;font-weight:650;margin:0 0 10px}
 .inner{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .rk2,.cs2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px 28px;align-items:start}
@@ -377,11 +380,11 @@ body:not(.org) .tb .ta{display:none}
   </section>
 
   <section class="card c4" id="vida"><h2>Jubilación</h2>
-    <div class="big"><span id="cotDays"></span> <small>días cotizados</small></div>
-    <div class="big" style="font-size:1.625rem;margin-top:2px" id="cotLong"></div>
-    <div class="bar"><i id="jubBar"></i></div>
-    <div class="sub">Barra: camino hacia 40 años cotizados</div>
-    <div class="row3"><div><b id="jubLeft" style="font-size:1rem"></b><span class="sub" id="jubDate"></span></div><div><b id="cot65"></b><span class="sub">cotizados al cumplir 65</span></div><div><b id="cot40"></b><span class="sub">llegas a 40 años cotizados</span></div></div>
+    <div class="jg"><svg id="jubG" viewBox="0 0 120 120" width="116" height="116" role="img" aria-label=""></svg>
+      <div><div class="big2" id="cotYrs"></div><div class="sub" id="cotRest"></div><div class="sub" style="margin-top:8px"><b id="cotDays"></b> días cotizados</div></div></div>
+    <div class="sub sh2">El camino que queda</div>
+    <svg id="jubTL" class="svgc" viewBox="0 0 340 92" role="img" aria-label=""></svg>
+    <div class="row3"><div><b id="jubLeft" style="font-size:1rem"></b><span class="sub" id="jubDate"></span></div><div><b id="cot65"></b><span class="sub">cotizados al cumplir 65</span></div></div>
     <div class="sub" id="cotNote" style="margin-top:6px"></div>
   </section>
   <section class="card c4 full" id="cBday"><h2>Cumpleaños</h2>
@@ -852,16 +855,28 @@ loadTurnos();
 // Jubilación y cotización
 const jd=new Date(DATA.jubilacion+"T00:00");let yy=jd.getFullYear()-y,mm=jd.getMonth()-m,dd=jd.getDate()-now.getDate();
 if(dd<0){mm--;dd+=new Date(y,m,0).getDate()}if(mm<0){yy--;mm+=12}
-$("jubLeft").textContent=`${yy} años, ${mm} meses y ${dd} días`;
+$("jubLeft").textContent=`${yy} años, ${mm} meses y ${dd} días`.replace(/\b1 años/g,"1 año").replace(/\b1 meses/g,"1 mes").replace(/\b1 días/g,"1 día");
 $("jubDate").textContent="Para jubilarte a los 65, el "+jd.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"});
 const C=DATA.cot,ref=new Date(C.at+"T00:00"),t0=new Date(y,m,now.getDate()),DAY=864e5;
 const cotNow=C.days+Math.max(0,Math.round((t0-ref)/DAY)),cot65=C.days+Math.round((jd-ref)/DAY);
-const ymd=n=>{const yr=Math.floor(n/365.25),r=n-yr*365.25,mo=Math.floor(r/30.4375),d=Math.round(r-mo*30.4375);return`${yr} años, ${mo} meses y ${d} días`};
+const sg=t=>t.replace(/\b1 años/g,"1 año").replace(/\b1 meses/g,"1 mes").replace(/\b1 días/g,"1 día");
+const ymd=n=>{const yr=Math.floor(n/365.25),r=n-yr*365.25,mo=Math.floor(r/30.4375),d=Math.round(r-mo*30.4375);return sg(`${yr} años, ${mo} meses y ${d} días`)};
 const when=n=>new Date(ref.getTime()+(n-C.days)*DAY).toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-const pct=cotNow/C.goal*100;
-pb("jubBar",pct,"Días cotizados sobre 40 años");$("cotDays").textContent=fmt(cotNow);$("cot65").textContent=ymd(cot65).split(",")[0];
-$("cot40").textContent=cotNow>=C.goal?"Ya":when(C.goal);
-$("cotLong").textContent=ymd(cotNow);
+const pct=Math.min(100,cotNow/C.goal*100);
+$("cotDays").textContent=fmt(cotNow);$("cot65").textContent=ymd(cot65).split(",")[0];
+{const parts=ymd(cotNow).split(", ");$("cotYrs").textContent=parts[0];$("cotRest").textContent=parts.slice(1).join(" y ").replace(" y  y "," y ")+" cotizados";
+  const R=48,Cc=2*Math.PI*R,g=$("jubG");g.setAttribute("aria-label",`Has cotizado el ${Math.round(pct)} % de los 40 años`);
+  g.innerHTML=`<circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--track)" stroke-width="11"/><circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--prog)" stroke-width="11" stroke-linecap="round" stroke-dasharray="${(Cc*pct/100).toFixed(1)} ${Cc.toFixed(1)}" transform="rotate(-90 60 60)"/><text x="60" y="60" text-anchor="middle" font-size="24" font-weight="700" fill="var(--ink)">${Math.round(pct)}%</text><text x="60" y="77" text-anchor="middle" font-size="9" fill="var(--mute)">de 40 años</text>`;
+  const W=340,L=10,Rr=14,y0=46,dom=Math.max(cot65-cotNow,1),X=d=>L+Math.min(1,Math.max(0,(d-cotNow)/dom))*(W-L-Rr);
+  const mk=[{d:cotNow,t:"Hoy",s:"",pos:"b",an:"start",dot:1},{d:C.min65,t:"38,5 años",s:cotNow>=C.min65?"ya":when(C.min65),pos:"a"},{d:C.goal,t:"40 años",s:cotNow>=C.goal?"ya":when(C.goal),pos:"b"},{d:cot65,t:"Jubilación",s:jd.toLocaleDateString("es-ES",{month:"short",year:"numeric"}),pos:"a",an:"end"}];
+  const x1=X(C.min65),x2=X(C.goal),xe=X(cot65);
+  const seg=(xa,xb,c,o)=>xb>xa?`<rect x="${xa.toFixed(1)}" y="${y0-7}" width="${(xb-xa).toFixed(1)}" height="14" fill="${c}"${o?` opacity="${o}"`:""}/>`:"";
+  $("jubTL").setAttribute("aria-label",`Hoy llevas ${ymd(cotNow).split(",")[0]} cotizados. Llegas a 38 años y 6 meses en ${cotNow>=C.min65?"ya cumplido":when(C.min65)}, a 40 años en ${cotNow>=C.goal?"ya cumplido":when(C.goal)} y te jubilas en ${jd.toLocaleDateString("es-ES",{month:"long",year:"numeric"})}.`);
+  $("jubTL").innerHTML=`<clipPath id="jcp"><rect x="${L}" y="${y0-7}" width="${W-L-Rr}" height="14" rx="7"/></clipPath><g clip-path="url(#jcp)">${seg(L,xe,"var(--track)")}${seg(L,x1,"var(--prog)")}${seg(x1,x2,"var(--prog)",".55")}</g>`
+    +mk.map(k=>{const x=X(k.d),up=k.pos==="a",an=k.an||"middle",ty=up?y0-14:y0+22,sy=up?ty-12:ty+11;
+      return`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${y0-9}" y2="${y0+9}" stroke="var(--ink)" stroke-width="1.5"/>`+(k.dot?`<circle cx="${x.toFixed(1)}" cy="${y0}" r="6" fill="var(--ink)" stroke="var(--card,#fff)" stroke-width="2"/>`:"")
+       +`<text x="${x.toFixed(1)}" y="${up?ty-12:ty}" text-anchor="${an}" font-size="10" font-weight="650" fill="var(--ink)">${k.t}</text>`+(k.s?`<text x="${x.toFixed(1)}" y="${up?ty:sy}" text-anchor="${an}" font-size="9.5" fill="var(--mute)">${k.s}</text>`:"")}).join("");
+}
 $("cotNote").textContent=`La ley actual pide 38 años y 6 meses para jubilarte a los 65 (${cotNow>=C.min65?"ya lo cumples":"lo alcanzas en "+when(C.min65)}). Estimación sin interrupciones; puede cambiar.`;
 
 // Reloj y cumpleaños: cuenta atrás en vivo
