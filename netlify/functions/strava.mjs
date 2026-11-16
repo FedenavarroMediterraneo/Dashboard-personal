@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import { safeEq, fetchDashboardData, stepEfforts, StravaError, CACHE_MS } from '../lib/strava-core.mjs';
+import { safeEq, fetchDashboardData, stepEfforts, stepLast, StravaError, CACHE_MS } from '../lib/strava-core.mjs';
 import { responder, roleOf } from '../lib/http.mjs';
 
 export default async (req) => {
@@ -9,6 +9,13 @@ export default async (req) => {
   if (!env.DASH_KEY || !env.STRAVA_CLIENT_ID || !env.STRAVA_CLIENT_SECRET)
     return json({ ok: false, error: 'config' }, 500);
   const role = roleOf(req, env);
+  const storeEarly = getStore('strava');
+  // Añade a la última carrera su detalle guardado (parciales, pulsaciones...), si es la misma carrera.
+  const attach = async d => {
+    const l = d && d.last; if (!l) return d;
+    const sv = await storeEarly.get('lastdet', { type: 'json' }).catch(() => null);
+    return sv && sv.id === l.id && sv.det ? { ...d, last: { ...l, det: sv.det } } : d;
+  };
   if (!role) return json({ ok: false, error: 'key' }, 401);
 
   const store = getStore('strava');
@@ -17,27 +24,36 @@ export default async (req) => {
   const fresh = cached && Date.now() - new Date(cached.updated).getTime() < CACHE_MS;
   // Primera pintura rápida: devuelve lo último guardado sin tocar Strava, aunque tenga más de 15 minutos.
   // Solo lectura: nunca toca Strava, devuelve lo último guardado.
-  if (role !== 'admin') return cached ? json({ ...cached, cached: true, viewer: true }) : json({ ok: false, error: 'nodata' }, 404);
-  if (q.get('cached') === '1') return cached ? json({ ...cached, cached: true, stale: !fresh }) : json({ ok: false, error: 'nodata' }, 404);
+  if (role !== 'admin') return cached ? json(await attach({ ...cached, cached: true, viewer: true })) : json({ ok: false, error: 'nodata' }, 404);
+  if (q.get('cached') === '1') return cached ? json(await attach({ ...cached, cached: true, stale: !fresh })) : json({ ok: false, error: 'nodata' }, 404);
   if (q.get('step') === 'efforts') {
     if (!cached) return json({ ok: false, error: 'nodata' }, 409);
     try {
       const { prs, rate } = await stepEfforts({ env, store });
       const merged = { ...cached, prs };
       await store.setJSON('cache', merged);
-      return json({ ...merged, cached: true, ...(rate ? { error: 'rate' } : {}) });
+      return json(await attach({ ...merged, cached: true, ...(rate ? { error: 'rate' } : {}) }));
     } catch (e) {
       return json({ ...cached, cached: true, error: e.kind || 'api' });
     }
   }
-  if (fresh && !q.has('force')) return json({ ...cached, cached: true });
+  if (q.get('step') === 'last') {
+    if (!cached || !cached.last) return json({ ok: false, error: 'nodata' }, 409);
+    try {
+      await stepLast({ env, store, id: cached.last.id });
+      return json(await attach({ ...cached, cached: true }));
+    } catch (e) {
+      return json(await attach({ ...cached, cached: true, error: e.kind || 'api' }));
+    }
+  }
+  if (fresh && !q.has('force')) return json(await attach({ ...cached, cached: true }));
 
   try {
     const data = await fetchDashboardData({ env, store });
     await store.setJSON('cache', data);
-    return json(data);
+    return json(await attach(data));
   } catch (e) {
-    if (cached) return json({ ...cached, cached: true, stale: true, error: e.kind || 'api' });
+    if (cached) return json(await attach({ ...cached, cached: true, stale: true, error: e.kind || 'api' }));
     if (e instanceof StravaError) return json({ ok: false, error: e.kind }, e.kind === 'not_connected' ? 401 : e.status === 429 ? 429 : 502);
     return json({ ok: false, error: 'unknown' }, 500);
   }

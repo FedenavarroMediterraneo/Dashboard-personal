@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { aggregate, analyze, syncRuns, buildPrs, stepEfforts, trim, getAccessToken, fetchDashboardData, signState, checkState, safeEq, StravaError, catOf, summarizeOthers } from '../netlify/lib/strava-core.mjs';
+import { aggregate, analyze, syncRuns, buildPrs, stepEfforts, trim, getAccessToken, fetchDashboardData, signState, checkState, safeEq, StravaError, catOf, summarizeOthers, shapeDetail, stepLast } from '../netlify/lib/strava-core.mjs';
 
 const mem = () => { const m = new Map(); return { m,
   async get(k) { return m.has(k) ? JSON.parse(m.get(k)) : null; },
@@ -103,6 +103,20 @@ await t('stepEfforts: lote, solo nombres útiles, no repite, 404 se marca', asyn
   assert.equal(calls.length, 5); assert.equal(r.prs.pending, 0);
   r = await stepEfforts({ env, store: s, fetchImpl: f, batch: 3 });
   assert.equal(calls.length, 5);
+});
+await t('shapeDetail y stepLast: parciales, cadencia x2, flujos reducidos y caché', async () => {
+  const det = { splits_metric: [{ distance: 1000, moving_time: 300, average_heartrate: 150.4, elevation_difference: 2 }, { distance: 80, moving_time: 20 }], average_cadence: 86, max_heartrate: 178.2, calories: 512.4, elapsed_time: 1700, max_speed: 4, average_temp: 14 };
+  const hr = Array.from({ length: 300 }, (_, i) => 140 + (i % 10));
+  const d = shapeDetail(det, { heartrate: { data: hr }, cadence: { data: hr.map(() => 85) }, velocity_smooth: { data: hr.map(() => 3.3) } });
+  assert.equal(d.splits.length, 1); assert.equal(d.splits[0].hr, 150); assert.equal(d.cad, 172); assert.equal(d.hrMax, 178); assert.equal(d.maxPace, 250);
+  assert.equal(d.hr.length, 60); assert.equal(d.cd[0], 170); assert.equal(d.pc[0], 303);
+  assert.equal(shapeDetail({}, null).splits.length, 0);
+  const s = await authStore(); const calls = [];
+  const f = async u => { calls.push(u); return { ok: true, status: 200, json: async () => (u.includes('streams') ? { heartrate: { data: hr } } : det) }; };
+  const a = await stepLast({ env, store: s, id: 7, fetchImpl: f }); assert.equal(calls.length, 2); assert.equal(a.cal, 512);
+  await stepLast({ env, store: s, id: 7, fetchImpl: f }); assert.equal(calls.length, 2);
+  const g = async u => (u.includes('streams') ? { ok: false, status: 404 } : { ok: true, status: 200, json: async () => det });
+  const b = await stepLast({ env, store: await authStore(), id: 8, fetchImpl: g }); assert.equal(b.hr, null); assert.equal(b.splits.length, 1);
 });
 await t('stepEfforts: 429 a mitad conserva lo hecho y avisa', async () => {
   const s = await authStore();

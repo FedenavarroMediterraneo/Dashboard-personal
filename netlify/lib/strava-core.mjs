@@ -245,6 +245,56 @@ export async function stepEfforts({ env, store, fetchImpl = fetch, now = Date.no
   return { prs, rate: rateHit };
 }
 
+// Detalle de una carrera (parciales por km, pulsaciones, cadencia...) listo para pintar. Función pura.
+export function shapeDetail(det = {}, streams = null) {
+  const num = v => (typeof v === 'number' && isFinite(v) ? v : null);
+  const st = Array.isArray(streams) ? Object.fromEntries(streams.map(x => [x.type, x])) : (streams || {});
+  const down = (arr, n = 60, f = x => x) => {
+    if (!Array.isArray(arr) || arr.length < 2) return null;
+    const k = Math.min(n, arr.length), out = [];
+    for (let i = 0; i < k; i++) {
+      const a = Math.floor(i * arr.length / k), b = Math.max(a + 1, Math.floor((i + 1) * arr.length / k));
+      let sum = 0, c = 0;
+      for (let j = a; j < b; j++) { const v = num(arr[j]); if (v != null) { sum += v; c++; } }
+      out.push(c ? f(sum / c) : null);
+    }
+    return out;
+  };
+  const splits = (det.splits_metric || []).filter(x => x && x.distance >= 200 && x.moving_time > 0).map(x => ({
+    km: Math.round(x.distance / 10) / 100, sec: x.moving_time, hr: num(x.average_heartrate) ? Math.round(x.average_heartrate) : null,
+    e: Math.round(num(x.elevation_difference) || 0),
+  }));
+  const cad = num(det.average_cadence);
+  const ms = num(det.max_speed);
+  const spd = st.velocity_smooth && st.velocity_smooth.data;
+  return {
+    splits,
+    hrMax: num(det.max_heartrate) ? Math.round(det.max_heartrate) : null,
+    cad: cad ? Math.round(cad * 2) : null, // Strava guarda la cadencia de carrera por pierna
+    cal: num(det.calories) ? Math.round(det.calories) : null,
+    elapsed: num(det.elapsed_time),
+    maxPace: ms && ms > 0 ? Math.round(1000 / ms) : null,
+    temp: num(det.average_temp),
+    suffer: num(det.suffer_score),
+    hr: down(st.heartrate && st.heartrate.data, 60, Math.round),
+    cd: down(st.cadence && st.cadence.data, 60, v => Math.round(v * 2)),
+    pc: down(spd, 60, v => (v > 0.3 ? Math.round(1000 / v) : null)),
+  };
+}
+
+// Pide el detalle de la última carrera (2 peticiones) y lo guarda para no repetirlo.
+export async function stepLast({ env, store, id, fetchImpl = fetch, now = Date.now() }) {
+  const saved = await store.get('lastdet', { type: 'json' }).catch(() => null);
+  if (saved && saved.id === id && saved.det) return saved.det;
+  const token = await getAccessToken({ env, store, fetchImpl, now });
+  const det = await api(`/activities/${id}`, token, fetchImpl);
+  let streams = null;
+  try { streams = await api(`/activities/${id}/streams?keys=heartrate,cadence,velocity_smooth&key_by_type=true`, token, fetchImpl); } catch (e) { if (e.kind === 'rate') throw e; }
+  const out = shapeDetail(det, streams);
+  await store.setJSON('lastdet', { id, det: out });
+  return out;
+}
+
 async function loadGear(ids, token, store, fetchImpl, now) {
   const cache = (await store.get('gear', { type: 'json' }).catch(() => null)) || {};
   let err = false;

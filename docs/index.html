@@ -213,6 +213,16 @@ body:not(.org) .tb .ta{display:none}
 #jubTL line,#jubTL text,#jubG line,#jubG text{pointer-events:none}
 #jubG [data-tip],#jubTL [data-tip]{cursor:pointer;outline:none}
 #jubG [data-tip]:focus-visible,#jubTL [data-tip]:focus-visible{stroke:var(--ink);stroke-width:1.5}
+.shd{margin:12px 0 4px;font-weight:600;color:var(--ink)}.shd span{font-weight:400;color:var(--mute)}
+.spl{display:flex;align-items:flex-end;gap:3px;height:7.5rem;padding-top:4px}
+.spl div{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;font-size:.5625rem;color:var(--mute);outline:none}
+.spl span{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--prog);opacity:.8}
+.spl .fast span{opacity:1;background:var(--ink)}.spl div:hover span,.spl div:focus-visible span{opacity:1}
+.spl b{font-weight:650;color:var(--ink);margin-bottom:2px;white-space:nowrap}.spl i{font-style:normal;margin-top:3px}
+.sp{display:flex;justify-content:space-between;gap:8px;margin:12px 0 2px;font-size:.75rem}.sp b{font-weight:600}.sp span{color:var(--mute)}
+.spk{display:block;width:100%;height:3.75rem}
+.stg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.stg b{display:block;font-size:1.0625rem}.stg small{font-size:.6875rem;font-weight:500;color:var(--mute)}
 .sh{font-size:.9375rem;font-weight:650;margin:0 0 10px}
 .inner{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .rk2,.cs2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px 28px;align-items:start}
@@ -479,13 +489,22 @@ async function loadStrava(force){
   try{
     const res=await fetch(API_BASE+"/.netlify/functions/strava"+(force?"?force=1":""),{headers:{"x-dash-key":key}});
     let d=null;try{d=await res.json()}catch(e){}
-    if(res.ok&&d&&d.ok&&useStrava(d)){sset(SC,JSON.stringify(d));if(d.stale)runStatus("Strava no responde, mostrando datos de "+ago(d.updated),"Reintentar");else scanPrs(key)}
+    if(res.ok&&d&&d.ok&&useStrava(d)){sset(SC,JSON.stringify(d));if(d.stale)runStatus("Strava no responde, mostrando datos de "+ago(d.updated),"Reintentar");else scanPrs(key).then(()=>scanLast(key))}
     else{
       if(d&&d.error==="key"){sset(SK,null);runStatus(ERR.key,"Introducir clave")}
       else runStatus((d&&ERR[d.error])||ERR.unknown,"Reintentar");
     }
   }catch(e){runStatus(location.protocol==="file:"?"Strava solo funciona con el dashboard publicado (GitHub Pages o Netlify).":"Sin conexión con el servidor.","Reintentar")}
   $("runBtn").disabled=false;
+}
+async function scanLast(key){
+  if(!S||!S.last||S.last.det)return;
+  try{
+    const res=await fetch(API_BASE+"/.netlify/functions/strava?step=last",{headers:{"x-dash-key":key}});
+    const d=await res.json();
+    if(res.ok&&d&&d.ok&&d.last&&d.last.det&&useStrava(d)){sset(SC,JSON.stringify(d));return}
+  }catch(e){}
+  const el=$("lastLoad");if(el)el.remove();
 }
 async function scanPrs(key){
   // Cada paso analiza unas 20 carreras antiguas; se limita para no agotar el cupo de Strava.
@@ -660,9 +679,33 @@ function anLast(d){
       route=`<svg class="route" viewBox="0 0 100 100" role="img" aria-label="Mapa de la ruta de la última carrera, ${fmt(l.km,1)} kilómetros"><path d="M${pts.map((p,i)=>((xs[i]-x0)*sc+ox).toFixed(1)+" "+((ys[i]-y0)*sc+oy).toFixed(1)).join("L")}"/></svg>`;
     }
   }catch(e){}
+  const D=l.det,tsec=l.sec||0;
+  const spark=(arr,col,f,lab,sum,flip,tl)=>{
+    if(!arr||arr.filter(x=>x!=null).length<3)return"";
+    const v=arr.filter(x=>x!=null),mn=Math.min(...v),mx=Math.max(...v),pd=(mx-mn||1)*.18,lo=mn-pd,hi=mx+pd,W=300,H=60,n=arr.length;
+    const X=i=>i*W/(n-1),Y=x=>3+(flip?(x-lo)/(hi-lo):1-(x-lo)/(hi-lo))*(H-6);
+    const pts=arr.map((x,i)=>x==null?null:X(i).toFixed(1)+","+Y(x).toFixed(1)).filter(Boolean),area=`M${pts[0]} L${pts.join(" L")} L${W},${H} L0,${H} Z`;
+    const hit=arr.map((x,i)=>x==null?"":`<rect x="${(X(i)-W/n/2).toFixed(1)}" y="0" width="${(W/n).toFixed(1)}" height="${H}" fill="transparent" data-tip="${tl(i,n)} · ${f(x)}"/>`).join("");
+    return`<div class="sp"><b>${lab}</b><span>${sum}</span></div><svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${lab} durante la carrera: ${sum}"><path d="${area}" fill="${col}" opacity=".14"/><polyline points="${pts.join(" ")}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>${hit}</svg>`};
+  let more="";
+  if(D){
+    const tl=(i,n)=>`Min ${Math.round((i+.5)/n*tsec/60)}`;
+    const sp=(D.splits||[]).map(x=>({km:x.km,pace:x.sec/x.km,hr:x.hr,e:x.e,part:x.km<.95}));
+    let spl="";
+    if(sp.length>1){
+      const full=sp.filter(x=>!x.part),pool=full.length?full:sp,fast=Math.min(...pool.map(x=>x.pace)),slow=Math.max(...pool.map(x=>x.pace)),fi=sp.findIndex(x=>x.pace===fast&&!x.part),lab=sp.length<=10;
+      spl=`<div class="sub shd">Parciales por km <span>· el más rápido, ${pc(fast)}</span></div><div class="spl" role="img" aria-label="Ritmo de cada kilómetro: ${sp.map((x,i)=>`km ${i+1} ${pc(x.pace)}`).join(", ")}">${sp.map((x,i)=>{const h=slow>fast?34+66*(slow-Math.min(Math.max(x.pace,fast),slow))/(slow-fast):100;return`<div data-tip="${x.part?"Resto ("+fmt(x.km,2)+" km)":"Km "+(i+1)} · ${pc(x.pace)} /km${x.hr?" · "+x.hr+" ppm":""}${x.e?" · "+(x.e>0?"+":"")+x.e+" m":""}" tabindex="0" class="${i===fi?"fast":""}">${lab?`<b>${pc(x.pace)}</b>`:""}<span style="height:${h.toFixed(0)}%"></span><i>${x.part?"·":i+1}</i></div>`}).join("")}</div>`;
+    }
+    const hrs=(D.hr||[]).filter(Boolean),hrAvg=l.hr||(hrs.length?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length):null);
+    const sparks=spark(D.hr,"#e03a2f",v=>v+" ppm","Pulsaciones",`media ${hrAvg||"–"} · máx ${D.hrMax||Math.max(...hrs)} ppm`,false,tl)
+      +spark(D.pc,"#2f9e44",v=>pc(v)+" /km","Ritmo",`media ${pc(l.pace)} /km`,true,tl)
+      +spark(D.cd,"#2f4fb8",v=>v+" ppm","Cadencia",`media ${D.cad||"–"} pasos/min`,false,tl);
+    const tiles=[[D.cad,"pasos/min","Cadencia"],[D.hrMax,"ppm","FC máxima"],[D.maxPace?pc(D.maxPace):null,"/km","Ritmo punta"],[D.cal,"kcal","Calorías"],[D.elapsed&&D.elapsed-tsec>30?dur(D.elapsed-tsec):null,"","Parado"],[D.temp!=null?Math.round(D.temp):null,"°C","Temperatura"]].filter(t=>t[0]!=null);
+    more=`${spl}${sparks}${tiles.length?`<div class="stg">${tiles.map(t=>`<div><b>${t[0]}${t[1]?` <small>${t[1]}</small>`:""}</b><span class="sub">${t[2]}</span></div>`).join("")}</div>`:""}`;
+  }else more=sget(SK)?`<div class="sub" style="margin-top:10px" id="lastLoad">Cargando más detalles de la carrera…</div>`:"";
   $("anLast").innerHTML=`<h2>Última carrera</h2><div class="lastg">${route}<div>
     <div class="big2">${fmt(l.km,1)} <small>km</small></div><div class="sub">${xe(l.name)}</div><div class="sub">${dshort(l.date)}${l.time?" · "+l.time:""}</div></div></div>
-    <div class="row3"><div><b>${pc(l.pace)} /km</b><span class="sub">Ritmo</span></div><div><b>${dur(l.sec)}</b><span class="sub">Tiempo</span></div><div><b>${l.hr?l.hr+" ppm":"–"}</b><span class="sub">FC media</span></div><div><b>+${fmt(l.elev)} m</b><span class="sub">Desnivel</span></div></div>`;
+    <div class="row3"><div><b>${pc(l.pace)} /km</b><span class="sub">Ritmo</span></div><div><b>${dur(l.sec)}</b><span class="sub">Tiempo</span></div><div><b>${l.hr?l.hr+" ppm":"–"}</b><span class="sub">FC media</span></div></div>${more}`;
 }
 function why(p){const g=p.diag||{};
   if(p.why)return" "+p.why;
