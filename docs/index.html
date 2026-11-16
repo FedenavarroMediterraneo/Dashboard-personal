@@ -209,6 +209,10 @@ body:not(.org) .tb .ta{display:none}
 .jg{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:4px 0 10px}
 .sh2{margin:6px 0 2px;font-weight:600}
 #jubTL{width:100%;height:auto;display:block}
+.tipb{position:fixed;z-index:60;max-width:15rem;padding:6px 10px;border-radius:8px;background:var(--ink);color:var(--card,#fff);font-size:.75rem;line-height:1.3;pointer-events:none;box-shadow:var(--shadow)}
+#jubTL line,#jubTL text,#jubG line,#jubG text{pointer-events:none}
+#jubG [data-tip],#jubTL [data-tip]{cursor:pointer;outline:none}
+#jubG [data-tip]:focus-visible,#jubTL [data-tip]:focus-visible{stroke:var(--ink);stroke-width:1.5}
 .sh{font-size:.9375rem;font-weight:650;margin:0 0 10px}
 .inner{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .rk2,.cs2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px 28px;align-items:start}
@@ -380,7 +384,7 @@ body:not(.org) .tb .ta{display:none}
   </section>
 
   <section class="card c4" id="vida"><h2>Jubilación</h2>
-    <div class="jg"><svg id="jubG" viewBox="0 0 120 120" width="116" height="116" role="img" aria-label=""></svg>
+    <div class="jg"><svg id="jubG" viewBox="0 0 150 150" width="136" height="136" role="img" aria-label=""></svg>
       <div><div class="big2" id="cotYrs"></div><div class="sub" id="cotRest"></div><div class="sub" style="margin-top:8px"><b id="cotDays"></b> días cotizados</div></div></div>
     <div class="sub sh2">El camino que queda</div>
     <svg id="jubTL" class="svgc" viewBox="0 0 340 92" role="img" aria-label=""></svg>
@@ -865,19 +869,36 @@ const when=n=>new Date(ref.getTime()+(n-C.days)*DAY).toLocaleDateString("es-ES",
 const pct=Math.min(100,cotNow/C.goal*100);
 $("cotDays").textContent=fmt(cotNow);$("cot65").textContent=ymd(cot65).split(",")[0];
 {const parts=ymd(cotNow).split(", ");$("cotYrs").textContent=parts[0];$("cotRest").textContent=parts.slice(1).join(" y ").replace(" y  y "," y ")+" cotizados";
-  const R=48,Cc=2*Math.PI*R,g=$("jubG");g.setAttribute("aria-label",`Has cotizado el ${Math.round(pct)} % de los 40 años`);
-  g.innerHTML=`<circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--track)" stroke-width="11"/><circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--prog)" stroke-width="11" stroke-linecap="round" stroke-dasharray="${(Cc*pct/100).toFixed(1)} ${Cc.toFixed(1)}" transform="rotate(-90 60 60)"/><text x="60" y="60" text-anchor="middle" font-size="24" font-weight="700" fill="var(--ink)">${Math.round(pct)}%</text><text x="60" y="77" text-anchor="middle" font-size="9" fill="var(--mute)">de 40 años</text>`;
-  const W=340,L=10,Rr=14,y0=46,dom=Math.max(cot65-cotNow,1),X=d=>L+Math.min(1,Math.max(0,(d-cotNow)/dom))*(W-L-Rr);
-  const mk=[{d:cotNow,t:"Hoy",s:"",pos:"b",an:"start",dot:1},{d:C.min65,t:"38,5 años",s:cotNow>=C.min65?"ya":when(C.min65),pos:"a"},{d:C.goal,t:"40 años",s:cotNow>=C.goal?"ya":when(C.goal),pos:"b"},{d:cot65,t:"Jubilación",s:jd.toLocaleDateString("es-ES",{month:"short",year:"numeric"}),pos:"a",an:"end"}];
+  const cot67=cot65+Math.round(2*365.25),dom=cot67,R=46,Cc=2*Math.PI*R,g=$("jubG"),fd=d=>jd.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"}),j67=new Date(jd.getFullYear()+2,jd.getMonth(),jd.getDate());
+  g.setAttribute("aria-label",`Has cotizado el ${Math.round(pct)} % de los 40 años. Marcas: 40 años cotizados en ${cotNow>=C.goal?"ya cumplido":when(C.goal)}; a los 65 llevarás ${ymd(cot65).split(",")[0]}; a los 67, ${ymd(cot67).split(",")[0]}.`);
+  const ang=d=>(-90+360*Math.min(1,d/dom))*Math.PI/180,pt=(d,r)=>[75+r*Math.cos(ang(d)),75+r*Math.sin(ang(d))];
+  const rm=[{d:C.goal,l:"40",tip:`40 años cotizados · ${cotNow>=C.goal?"ya cumplido":when(C.goal)+" (dentro de "+ymd(C.goal-cotNow)+")"}`},{d:cot65,l:"65",tip:`A los 65 (${fd()}) llevarás ${ymd(cot65)} cotizados`},{d:cot67,l:"67",tip:`A los 67 (${j67.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})}) llevarás ${ymd(cot67)} cotizados`}];
+  g.innerHTML=`<circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--track)" stroke-width="11"/><circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--prog)" stroke-width="11" stroke-linecap="round" stroke-dasharray="${(Cc*Math.min(cotNow,dom)/dom).toFixed(1)} ${Cc.toFixed(1)}" transform="rotate(-90 75 75)" data-tip="Hoy: ${ymd(cotNow)} cotizados (${Math.round(pct)} % de 40 años)" tabindex="0"/><text x="75" y="76" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">${Math.round(pct)}%</text><text x="75" y="89" text-anchor="middle" font-size="8" fill="var(--mute)">hacia 40 años</text>`
+   +rm.map(k=>{const [x1,y1]=pt(k.d,R-8),[x2,y2]=pt(k.d,R+8),[tx,ty]=pt(k.d,R+16),[cx,cy]=pt(k.d,R);
+     return`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/><text x="${tx.toFixed(1)}" y="${(ty+3).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="650" fill="var(--ink)">${k.l}</text><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="9" fill="transparent" data-tip="${k.tip}" tabindex="0"/>`}).join("");
+  const W=340,L=10,Rr=14,y0=46,dm=Math.max(cot65-cotNow,1),X=d=>L+Math.min(1,Math.max(0,(d-cotNow)/dm))*(W-L-Rr);
+  const mk=[{d:cotNow,t:"Hoy",s:"",pos:"b",an:"start",dot:1,tip:"Hoy: "+ymd(cotNow)+" cotizados"},{d:C.min65,t:"38,5 años",s:cotNow>=C.min65?"ya":when(C.min65),pos:"a",tip:"38 años y 6 meses cotizados · "+(cotNow>=C.min65?"ya cumplido":when(C.min65)+" (dentro de "+ymd(C.min65-cotNow)+")")},{d:C.goal,t:"40 años",s:cotNow>=C.goal?"ya":when(C.goal),pos:"b",tip:"40 años cotizados · "+(cotNow>=C.goal?"ya cumplido":when(C.goal)+" (dentro de "+ymd(C.goal-cotNow)+")")},{d:cot65,t:"Jubilación",s:jd.toLocaleDateString("es-ES",{month:"short",year:"numeric"}),pos:"a",an:"end",tip:"Jubilación a los 65 · "+fd()+" (dentro de "+ymd(cot65-cotNow)+")"}];
   const x1=X(C.min65),x2=X(C.goal),xe=X(cot65);
   const seg=(xa,xb,c,o)=>xb>xa?`<rect x="${xa.toFixed(1)}" y="${y0-7}" width="${(xb-xa).toFixed(1)}" height="14" fill="${c}"${o?` opacity="${o}"`:""}/>`:"";
   $("jubTL").setAttribute("aria-label",`Hoy llevas ${ymd(cotNow).split(",")[0]} cotizados. Llegas a 38 años y 6 meses en ${cotNow>=C.min65?"ya cumplido":when(C.min65)}, a 40 años en ${cotNow>=C.goal?"ya cumplido":when(C.goal)} y te jubilas en ${jd.toLocaleDateString("es-ES",{month:"long",year:"numeric"})}.`);
-  $("jubTL").innerHTML=`<clipPath id="jcp"><rect x="${L}" y="${y0-7}" width="${W-L-Rr}" height="14" rx="7"/></clipPath><g clip-path="url(#jcp)">${seg(L,xe,"var(--track)")}${seg(L,x1,"var(--prog)")}${seg(x1,x2,"var(--prog)",".55")}</g>`
+  $("jubTL").innerHTML=`<clipPath id="jcp"><rect x="${L}" y="${y0-7}" width="${W-L-Rr}" height="14" rx="7"/></clipPath><rect x="${L}" y="${y0-9}" width="${W-L-Rr}" height="18" fill="transparent" data-tip="Quedan ${ymd(cot65-cotNow)} hasta jubilarte"/><g clip-path="url(#jcp)">${seg(L,xe,"var(--track)")}${seg(L,x1,"var(--prog)")}${seg(x1,x2,"var(--prog)",".55")}</g>`
     +mk.map(k=>{const x=X(k.d),up=k.pos==="a",an=k.an||"middle",ty=up?y0-14:y0+22,sy=up?ty-12:ty+11;
-      return`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${y0-9}" y2="${y0+9}" stroke="var(--ink)" stroke-width="1.5"/>`+(k.dot?`<circle cx="${x.toFixed(1)}" cy="${y0}" r="6" fill="var(--ink)" stroke="var(--card,#fff)" stroke-width="2"/>`:"")
+      return`<circle cx="${x.toFixed(1)}" cy="${y0}" r="11" fill="transparent" data-tip="${k.tip}" tabindex="0"/>`+`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${y0-9}" y2="${y0+9}" stroke="var(--ink)" stroke-width="1.5"/>`+(k.dot?`<circle cx="${x.toFixed(1)}" cy="${y0}" r="6" fill="var(--ink)" stroke="var(--card,#fff)" stroke-width="2"/>`:"")
        +`<text x="${x.toFixed(1)}" y="${up?ty-12:ty}" text-anchor="${an}" font-size="10" font-weight="650" fill="var(--ink)">${k.t}</text>`+(k.s?`<text x="${x.toFixed(1)}" y="${up?ty:sy}" text-anchor="${an}" font-size="9.5" fill="var(--mute)">${k.s}</text>`:"")}).join("");
 }
 $("cotNote").textContent=`La ley actual pide 38 años y 6 meses para jubilarte a los 65 (${cotNow>=C.min65?"ya lo cumples":"lo alcanzas en "+when(C.min65)}). Estimación sin interrupciones; puede cambiar.`;
+
+// Tooltip genérico para gráficos SVG (ratón, táctil y teclado)
+(function(){
+  const tp=document.createElement("div");tp.className="tipb";tp.setAttribute("role","tooltip");tp.hidden=true;document.body.appendChild(tp);let tm=0;
+  const show=(el,x,y)=>{tp.textContent=el.getAttribute("data-tip");tp.hidden=false;const w=tp.offsetWidth,h=tp.offsetHeight;
+    tp.style.left=Math.max(6,Math.min(innerWidth-w-6,x-w/2))+"px";tp.style.top=(y-h-12<6?y+16:y-h-12)+"px"};
+  const hide=()=>{tp.hidden=true;clearTimeout(tm)};
+  document.addEventListener("pointermove",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");if(el&&e.pointerType!=="touch")show(el,e.clientX,e.clientY);else if(e.pointerType!=="touch")hide()});
+  document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");clearTimeout(tm);if(el){show(el,e.clientX,e.clientY);if(e.pointerType==="touch")tm=setTimeout(hide,3500)}else hide()});
+  document.addEventListener("focusin",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");if(el){const r=el.getBoundingClientRect();show(el,r.left+r.width/2,r.top)}});
+  document.addEventListener("focusout",hide);addEventListener("scroll",hide,{passive:true});
+})();
 
 // Reloj y cumpleaños: cuenta atrás en vivo
 const LIFE_CELLS=10;
