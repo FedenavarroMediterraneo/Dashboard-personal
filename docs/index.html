@@ -201,6 +201,11 @@ body:not(.org) .tb .ta{display:none}
 @media (pointer:coarse){.mini{min-height:44px}}
 .keyf{margin-top:8px}.keyf div{display:flex;gap:8px;margin-top:4px}.keyf input{flex:1;min-width:0;font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line,currentColor);background:transparent;color:inherit}
 .c8{grid-column:span 8}.c12{grid-column:span 12}
+.cmp{display:flex;gap:6px;align-items:center;font-size:.75rem;color:var(--mute);margin:-2px 0 8px;padding:6px 10px;border-radius:10px;background:var(--soft)}
+.cmp.up2{color:#1f7a3a}.cmp.dn2{color:#b4531a}
+.prd b{text-transform:capitalize}
+.prd{margin-top:4px;color:var(--ink);min-height:1.2em}
+.svgc .hit{outline:none}.svgc .hit:focus-visible{stroke:var(--ink);stroke-width:1}
 .sh{font-size:.9375rem;font-weight:650;margin:0 0 10px}
 .inner{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .rk2,.cs2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px 28px;align-items:start}
@@ -608,16 +613,30 @@ function anPace(d){
     svg=`<svg class="svgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ritmo medio por mes en ${y}: ${pts.map(o=>MES[o.i]+" "+pc(o.p)+" por km").join(", ")}. Mejor mes: ${MES[pts.reduce((a,b)=>b.p<a.p?b:a).i]}.">
       <line class="gl" x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}"/>
       ${pts.length>1?`<polyline class="ln" points="${line}"/>`:""}
-      ${pts.map(o=>`<circle class="dot" cx="${X(o.i).toFixed(1)}" cy="${Y(o.p).toFixed(1)}" r="4"><title>${MESL[o.i]}: ${pc(o.p)} /km</title></circle>`).join("")}
+      ${pts.map(o=>`<circle class="dot" data-i="${o.i}" cx="${X(o.i).toFixed(1)}" cy="${Y(o.p).toFixed(1)}" r="4"/>`).join("")}
       <text class="tx" x="${Math.min(X(lastp.i),W-R-14).toFixed(1)}" y="${(Y(lastp.p)-9).toFixed(1)}" text-anchor="middle">${pc(lastp.p)}</text>
-      ${MES.map((n,i)=>`<text x="${X(i).toFixed(1)}" y="${H-4}" text-anchor="middle">${n}</text>`).join("")}</svg>
-      <div class="sub">Más arriba, más rápido.</div>`;
+      ${MES.map((n,i)=>`<text x="${X(i).toFixed(1)}" y="${H-4}" text-anchor="middle">${n}</text>`).join("")}
+      ${MES.map((n,i)=>i<=m?`<rect class="hit" data-i="${i}" tabindex="0" x="${(X(i)-(W-L-R)/22).toFixed(1)}" y="0" width="${((W-L-R)/11).toFixed(1)}" height="${H}" fill="transparent" aria-label="${MESL[i]}: ${d.paceMonths[i]!=null?pc(d.paceMonths[i])+" por km":"sin carreras"}"/>`:"").join("")}</svg>
+      <div class="sub prd" id="paceRd" aria-live="polite"></div>
+      <div class="sub">Más arriba, más rápido. Pasa el dedo o el ratón por un mes para ver su ritmo.</div>`;
   }
+  const pm=m>0?d.paceMonths[m-1]:null,cm=d.pace.month;let cmp="";
+  if(pm!=null&&cm){const df=Math.round(cm-pm),ab=Math.abs(df);
+    cmp=`<div class="cmp ${df<0?"up2":df>0?"dn2":""}"><span aria-hidden="true">${df<0?"▲":df>0?"▼":"●"}</span><span>${df===0?"Mismo ritmo que":`${ab} s/km ${df<0?"más rápido":"más lento"} que`} ${MESL[m-1].toLowerCase()} (${pc(pm)} /km)</span></div>`}
+  else if(m>0&&cm)cmp=`<div class="cmp"><span>Sin carreras en ${MESL[m-1].toLowerCase()} para comparar</span></div>`;
   $("anPace").innerHTML=`<h2>Ritmo y tiempo</h2>
     <div class="big2">${d.time.month?dur(d.time.month):"–"} <small>este mes</small></div>
     <div class="sub">${d.time.year?`Este año ${dur(d.time.year)} corriendo${d.pace.year?` · ritmo medio ${pc(d.pace.year)} /km`:""}`:""}</div>
     <div class="row3"><div><b>${d.pace.month?pc(d.pace.month)+" /km":"–"}</b><span class="sub">Ritmo del mes</span></div><div><b>${d.elev.month?"+"+fmt(d.elev.month)+" m":"–"}</b><span class="sub">Desnivel del mes</span></div><div><b>${d.hr.month?d.hr.month+" ppm":"–"}</b><span class="sub">FC media</span></div></div>
-    ${svg}<div class="sub" style="margin-top:6px">Este año: +${fmt(d.elev.year)} m de desnivel</div>`;
+    ${cmp}${svg}<div class="sub" style="margin-top:6px">Este año: +${fmt(d.elev.year)} m de desnivel</div>`;
+  const rd=$("paceRd");
+  if(rd){
+    const show=i=>{const v=d.paceMonths[i];rd.innerHTML=`<b>${MESL[i]}</b> · ${v!=null?pc(v)+" /km":"sin carreras"}`;
+      document.querySelectorAll("#anPace .dot").forEach(c=>c.setAttribute("r",c.dataset.i==i?"6":"4"))};
+    document.querySelectorAll("#anPace .hit").forEach(r=>{const i=+r.dataset.i;["pointerenter","pointerdown","focus"].forEach(ev=>r.addEventListener(ev,()=>show(i)))});
+    const dflt=pts.length?pts[pts.length-1].i:m,svgEl=document.querySelector("#anPace .svgc");if(svgEl)svgEl.addEventListener("pointerleave",()=>show(dflt));
+    show(dflt);
+  }
 }
 function anLast(d){
   const l=d.last;
