@@ -634,8 +634,12 @@ function anPace(d){
   $("anPace").innerHTML=`<h2>Ritmo y tiempo</h2>
     <div class="big2">${d.time.month?dur(d.time.month):"–"} <small>este mes</small></div>
     <div class="sub">${d.time.year?`Este año ${dur(d.time.year)} corriendo${d.pace.year?` · ritmo medio ${pc(d.pace.year)} /km`:""}`:""}</div>
-    <div class="row3"><div><b>${d.pace.month?pc(d.pace.month)+" /km":"–"}</b><span class="sub">Ritmo del mes</span></div><div><b>${d.elev.month?"+"+fmt(d.elev.month)+" m":"–"}</b><span class="sub">Desnivel del mes</span></div><div><b>${d.hr.month?d.hr.month+" ppm":"–"}</b><span class="sub">FC media</span></div></div>
-    ${cmp}${svg}<div class="sub" style="margin-top:6px">Este año: +${fmt(d.elev.year)} m de desnivel</div>`;
+    <div class="row3"><div><b>${d.pace.month?pc(d.pace.month)+" /km":"–"}</b><span class="sub">Ritmo del mes</span></div><div><b>${d.hr.month?d.hr.month+" ppm":"–"}</b><span class="sub">FC media</span></div></div>
+    ${cmp}${svg}
+    <div class="sub" style="margin-top:14px">Kilómetros por día de la semana (${y})</div>
+    <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)),["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"])}</div>`;
+  {const DN=["lunes","martes","miércoles","jueves","viernes","sábado","domingo"],mxi=d.weekdays.indexOf(Math.max(...d.weekdays));
+  img("wdChart","Kilómetros por día de la semana este año: "+DN.map((n,i)=>`${n} ${fmt(d.weekdays[i])}`).join(", ")+`. El día más activo es ${DN[mxi]}.`);}
   const rd=$("paceRd");
   if(rd){
     const show=i=>{const v=d.paceMonths[i];rd.innerHTML=`<b>${MESL[i]}</b> · ${v!=null?pc(v)+" /km":"sin carreras"}`;
@@ -695,14 +699,10 @@ function anCal(d){
   $("anCalB").innerHTML=`<h3 class="sh">Calendario de actividad</h3>
     <div class="calnav"><button type="button" id="ycPrev" aria-label="Mes anterior"${atMin?" disabled":""}>‹</button><button type="button" class="ttl" id="ycTitle" aria-label="Volver al mes actual">${MESF[calM]} ${calY} · ${tot} ${tot===1?"día":"días"}</button><button type="button" id="ycNext" aria-label="Mes siguiente"${atMax?" disabled":""}>›</button></div>
     <div class="mo mbig"><div class="mw" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="md">${cells}</div></div>
-    <div class="lg ylg">${lg}</div>
-    <div class="sub" style="margin-top:16px">Kilómetros por día de la semana (${y})</div>
-    <div class="chart" id="wdChart" style="--bc:var(--prog);--bn:var(--ink);height:5.5rem;max-width:28rem">${bars(d.weekdays,["L","M","X","J","V","S","D"],d.weekdays.indexOf(Math.max(...d.weekdays)),["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"])}</div>`;
+    <div class="lg ylg">${lg}</div>`;
   $("ycPrev").onclick=()=>{if(calM===0){calY--;calM=11}else calM--;anCal(d)};
   $("ycNext").onclick=()=>{if(calM===11){calY++;calM=0}else calM++;anCal(d)};
   $("ycTitle").onclick=()=>{calY=y;calM=m;anCal(d)};
-  const DN=["lunes","martes","miércoles","jueves","viernes","sábado","domingo"],mxi=d.weekdays.indexOf(Math.max(...d.weekdays));
-  img("wdChart","Kilómetros por día de la semana este año: "+DN.map((n,i)=>`${n} ${fmt(d.weekdays[i])}`).join(", ")+`. El día más activo es ${DN[mxi]}.`);
 }
 function anStreak(d){
   const s=d.streak,tn=Math.round(Date.UTC(y,m,now.getDate())/864e5),dow=(new Date(y,m,now.getDate()).getDay()+6)%7,ws=new Date((tn-dow)*864e5).toISOString().slice(0,10);
