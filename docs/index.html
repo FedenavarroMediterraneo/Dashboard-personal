@@ -223,6 +223,7 @@ body:not(.org) .tb .ta{display:none}
 .spk{display:block;width:100%;height:3.75rem}
 .stg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .stg b{display:block;font-size:1.0625rem}.stg small{font-size:.6875rem;font-weight:500;color:var(--mute)}
+.hitc{fill:transparent;outline:none}.hitc:hover,.hitc:focus-visible{fill:var(--soft);opacity:.55}
 .sh{font-size:.9375rem;font-weight:650;margin:0 0 10px}
 .inner{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .rk2,.cs2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:22px 28px;align-items:start}
@@ -780,9 +781,12 @@ function anProj(d){
     <svg class="svgc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Kilómetros acumulados: este año ${fmt(d.year)}, proyección a diciembre ${fmt(Math.round(projA))}${hp?", año anterior "+fmt(Math.round(cP[11]))+" en total":""}.">
       ${grid}<line class="gl" x1="${L}" x2="${W-R}" y1="${goalY.toFixed(1)}" y2="${goalY.toFixed(1)}" style="stroke:var(--mute)"/>
       ${hp?`<polyline class="ln pv" points="${P(cP)}"/>`:""}<polyline class="ln pj" points="${proj}"/><polyline class="ln" points="${P(cT)}"/>
-      ${cT.map((v,i)=>`<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.5"><title>${MESL[i]}: ${fmt(Math.round(v))} km acumulados (${y})</title></circle>`).join("")}
-      ${hp?cP.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="7" fill="transparent"><title>${MESL[i]}: ${fmt(Math.round(v))} km acumulados (${y-1})</title></circle>`).join(""):""}
+      ${cT.map((v,i)=>`<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.5"/>`).join("")}
+      ${hp?cP.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="7" fill="transparent"/>`).join(""):""}
       ${labs.map(l=>lab(l.t,l.y,l.c)).join("")}
+      ${MES.map((n,i)=>{const w=(W-L-R)/11,fut=i>m,cum=fut?d.year+(projA-d.year)*(i-m)/Math.max(1,11-m):cT[i],mk=d.months[i]||0,cap=MESL[i][0].toUpperCase()+MESL[i].slice(1);
+        const tip=fut?`${cap} · previsión ≈ ${fmt(Math.round(cum))} km acumulados`:`${cap} · ${fmt(mk,1)} km en el mes · ${fmt(Math.round(cum))} km acumulados${hp?` (${y-1}: ${fmt(Math.round(cP[i]))})`:""}`;
+        return`<rect class="hitc" x="${Math.max(L-w/2,X(i)-w/2).toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H-T-B+8}" data-tip="${tip}" tabindex="0"/>`}).join("")}
       ${MES.map((n,i)=>nar&&i%2?"":`<text x="${X(i).toFixed(1)}" y="${H-4}" text-anchor="middle">${n}</text>`).join("")}</svg>
     <div class="lg"><span><i class="sw"></i>${y}</span><span><i class="sw pj"></i>Previsión</span>${hp?`<span><i class="sw pv"></i>${y-1}</span>`:""}${nar?`<span>Cifras a la derecha: previsión${hp?`, ${y-1}`:""} y objetivo</span>`:""}</div>`;
   pb("projBar",Math.min(100,d.year/GOAL_YEAR*100),"Progreso hacia el objetivo anual de kilómetros");
