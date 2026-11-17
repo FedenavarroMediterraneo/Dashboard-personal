@@ -135,9 +135,12 @@ const dayNum = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)
 const dayStr = n => new Date(n * 86400000).toISOString().slice(0, 10);
 const weekStart = n => n - ((new Date(n * 86400000).getUTCDay() + 6) % 7);
 
+// Strava pasará a ids de 64 bits (junio 2027): JSON.parse los redondea, así que se usa siempre id_str (texto).
+export const sid = a => String(a.id_str ?? a.id);
+
 export function trim(a) {
   return {
-    id: a.id, d: String(a.start_date_local || ''), km: (a.distance || 0) / 1000, t: a.moving_time || 0,
+    id: sid(a), d: String(a.start_date_local || ''), km: (a.distance || 0) / 1000, t: a.moving_time || 0,
     e: a.total_elevation_gain || 0, hr: a.average_heartrate || null, g: a.gear_id || null,
     n: a.name || '', p: a.map?.summary_polyline || null,
   };
@@ -194,11 +197,11 @@ export function analyze(runs, today, others = []) {
 }
 
 export function buildPrs(done, index) {
-  const date = new Map(index.map(r => [r.id, r.d]));
+  const date = new Map(index.map(r => [String(r.id), r.d]));
   const items = {};
   for (const [id, ef] of Object.entries(done)) {
     for (const [k, t] of Object.entries(ef)) {
-      if (!items[k] || t < items[k].t) items[k] = { t, id: +id, d: (date.get(+id) || '').slice(0, 10) };
+      if (!items[k] || t < items[k].t) items[k] = { t, id: String(id), d: (date.get(String(id)) || '').slice(0, 10) };
     }
   }
   const total = index.length, scanned = index.filter(r => done[r.id]).length;
@@ -340,7 +343,7 @@ export function summarizeOthers(others, today, runs = []) {
 
 export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date() }) {
   const saved = await store.get('activities', { type: 'json' }).catch(() => null);
-  const full = !saved || !Array.isArray(saved.runs) || !Array.isArray(saved.others) || saved.v !== 3 || !saved.fullAt || now.getTime() - new Date(saved.fullAt).getTime() > FULL_RESYNC_MS;
+  const full = !saved || !Array.isArray(saved.runs) || !Array.isArray(saved.others) || saved.v !== 4 || !saved.fullAt || now.getTime() - new Date(saved.fullAt).getTime() > FULL_RESYNC_MS;
   const after = full ? '' : `after=${Math.max(0, (saved.syncedAt || 0) - SYNC_MARGIN_S)}&`;
   const fetched = [];
   for (let page = 1; page <= 15; page++) {
@@ -349,7 +352,7 @@ export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date
     if (batch.length < 200) break;
   }
   const fresh = fetched.filter(a => RUN_TYPES.has(a.sport_type || a.type)).map(trim);
-  const freshOthers = fetched.filter(a => !RUN_TYPES.has(a.sport_type || a.type)).map(a => ({ id: a.id, d: String(a.start_date_local || ''), c: catOf(a.sport_type || a.type), s: Math.round(a.moving_time || 0) }));
+  const freshOthers = fetched.filter(a => !RUN_TYPES.has(a.sport_type || a.type)).map(a => ({ id: sid(a), d: String(a.start_date_local || ''), c: catOf(a.sport_type || a.type), s: Math.round(a.moving_time || 0) }));
   let runs, others;
   if (full) { runs = fresh; others = freshOthers; }
   else {
@@ -364,7 +367,7 @@ export async function syncRuns({ token, store, fetchImpl = fetch, now = new Date
   for (const r of runs) if (!newest || r.d > newest.d) newest = r;
   for (const r of runs) if (r !== newest) r.p = null; // la ruta solo hace falta de la última carrera
   await store.setJSON('activities', {
-    syncedAt: Math.floor(now.getTime() / 1000), fullAt: full ? now.toISOString() : saved.fullAt, runs, others, v: 3,
+    syncedAt: Math.floor(now.getTime() / 1000), fullAt: full ? now.toISOString() : saved.fullAt, runs, others, v: 4,
   });
   return { runs, others, full };
 }
@@ -377,7 +380,7 @@ export async function fetchDashboardData({ env, store, fetchImpl = fetch, now = 
   await store.setJSON('runs', index);
   let athleteId = (await store.get('athlete', { type: 'json' }).catch(() => null))?.id;
   if (!athleteId) {
-    athleteId = (await api('/athlete', token, fetchImpl)).id;
+    { const ath = await api('/athlete', token, fetchImpl); athleteId = String(ath.id_str ?? ath.id); }
     await store.setJSON('athlete', { id: athleteId });
   }
   const stats = await api(`/athletes/${athleteId}/stats`, token, fetchImpl);

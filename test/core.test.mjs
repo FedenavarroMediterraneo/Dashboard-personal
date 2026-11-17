@@ -84,7 +84,7 @@ await t('analyze: semana que cruza de año y racha tras fin de año', async () =
 await t('buildPrs: elige el mejor y cuenta pendientes', async () => {
   const index = [{ id: 1, d: '2026-01-01T07:00:00Z' }, { id: 2, d: '2026-02-01T07:00:00Z' }, { id: 3, d: '2026-03-01T07:00:00Z' }];
   const p = buildPrs({ 1: { '5k': 1500 }, 2: { '5k': 1400, '10k': 3000 } }, index);
-  assert.equal(p.items['5k'].t, 1400); assert.equal(p.items['5k'].id, 2); assert.equal(p.items['5k'].d, '2026-02-01');
+  assert.equal(p.items['5k'].t, 1400); assert.equal(p.items['5k'].id, '2'); assert.equal(p.items['5k'].d, '2026-02-01');
   assert.equal(p.pending, 1); assert.equal(p.scanned, 2);
 });
 const authStore = async () => { const s = mem(); await s.setJSON('token', { access_token: 'A', refresh_token: 'R', expires_at: 2e9 }); return s; };
@@ -111,6 +111,9 @@ await t('shapeDetail y stepLast: parciales, cadencia x2, flujos reducidos y cach
   assert.equal(d.splits.length, 1); assert.equal(d.splits[0].hr, 150); assert.equal(d.cad, 172); assert.equal(d.hrMax, 178); assert.equal(d.maxPace, 250);
   assert.equal(d.hr.length, 60); assert.equal(d.cd[0], 170); assert.equal(d.pc[0], 303);
   assert.equal(shapeDetail({}, null).splits.length, 0);
+  // ids de 64 bits: se usa id_str y no el número redondeado por JSON.parse
+  const big = { id: 9007199254740992, id_str: '9007199254740993', start_date_local: '2027-06-02T07:00:00Z', distance: 5000 };
+  assert.equal(trim(big).id, '9007199254740993'); assert.equal(trim({ id: 12 }).id, '12');
   const s = await authStore(); const calls = [];
   const f = async u => { calls.push(u); return { ok: true, status: 200, json: async () => (u.includes('streams') ? { heartrate: { data: hr } } : det) }; };
   const a = await stepLast({ env, store: s, id: 7, fetchImpl: f }); assert.equal(calls.length, 2); assert.equal(a.cal, 512);
@@ -171,12 +174,12 @@ await t('syncRuns: primera vez completa, luego incremental con after=, fusiona y
   assert.equal(r.full, false); assert.match(calls[1], /after=\d+&per_page=200&page=1/);
   const after = +calls[1].match(/after=(\d+)/)[1];
   assert.equal(after, Math.floor(t0.getTime() / 1000) - 7 * 86400);
-  assert.deepEqual(r.runs.map(x => x.id).sort(), [1, 2, 3]); assert.equal(r.runs.find(x => x.id === 1).km, 12);
-  assert.equal(r.runs.find(x => x.id === 3).p, 'CCC'); assert.equal(r.runs.find(x => x.id === 1).p, null); assert.equal(r.runs.find(x => x.id === 2).p, null);
+  assert.deepEqual(r.runs.map(x => x.id).sort(), ['1', '2', '3']); assert.equal(r.runs.find(x => x.id === '1').km, 12);
+  assert.equal(r.runs.find(x => x.id === '3').p, 'CCC'); assert.equal(r.runs.find(x => x.id === '1').p, null); assert.equal(r.runs.find(x => x.id === '2').p, null);
   // pasadas 24 h: completa otra vez y se descarta lo que ya no existe en Strava (id 2)
   serve = [run(1, '2026-10-01', 12), run(3, '2026-10-16', 6)];
   r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: new Date(t0.getTime() + 25 * 3600e3) });
-  assert.equal(r.full, true); assert.ok(!calls[2].includes('after=')); assert.deepEqual(r.runs.map(x => x.id).sort(), [1, 3]);
+  assert.equal(r.full, true); assert.ok(!calls[2].includes('after=')); assert.deepEqual(r.runs.map(x => x.id).sort(), ['1', '3']);
 });
 await t('catOf: caminata, yoga, gimnasio, bici y otros', async () => {
   assert.equal(catOf('Walk'), 'walk'); assert.equal(catOf('Hike'), 'walk');
@@ -211,7 +214,7 @@ await t('syncRuns: guarda categoría y duración y rehace todo si el guardado es
   const wk = { id: 50, start_date_local: '2026-10-19T07:40:00Z', sport_type: 'Workout', moving_time: 2700, distance: 0 };
   const f = async () => ({ ok: true, status: 200, json: async () => [wk] });
   let r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: t0 });
-  assert.deepEqual(r.others[0], { id: 50, d: '2026-10-19T07:40:00Z', c: 'gym', s: 2700 });
+  assert.deepEqual(r.others[0], { id: '50', d: '2026-10-19T07:40:00Z', c: 'gym', s: 2700 });
   await s.setJSON('activities', { syncedAt: 1, fullAt: t0.toISOString(), runs: [], others: [{ id: 50, d: '2026-10-19T07:40:00Z' }] });
   r = await syncRuns({ token: 'A', store: s, fetchImpl: f, now: new Date(t0.getTime() + 3600e3) });
   assert.equal(r.full, true); assert.equal(r.others[0].c, 'gym');
